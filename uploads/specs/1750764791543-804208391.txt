@@ -1,0 +1,235 @@
+1. Create a User
+Method: POST
+
+Endpoint: /users
+
+Request Body:
+
+json
+Copy code
+
+
+{
+  "name": "string",
+  "email": "string",
+  "password": "string",
+  "organizationId": "a7029577-a3b2-40bf-9963-9a32878f261d",
+  "roleId": "string (optional)"
+}
+
+
+
+2. Assign a Role to a User
+Method: PATCH
+
+Endpoint: /users/:userId/role
+
+URL Parameter:
+
+userId — ID of the user to assign the role to
+
+Request Body:
+
+json
+Copy code
+{
+  "roleId": "string"
+}
+
+
+1. User Signup
+Method: POST
+
+Endpoint: /auth/signup
+
+Request Body:
+
+json
+Copy code
+{
+  "name": "string",
+  "email": "string",
+  "password": "string",
+  "organizationId": "string",
+  "roleId": "string (optional)"
+}
+
+
+
+2. User Login
+Method: POST
+
+Endpoint: /auth/login
+
+Request Body:
+
+json
+Copy code
+{
+  "email": "string",
+  "password": "string"
+}
+
+
+
+1. Create Organization
+Method: POST
+
+Endpoint: /organizations
+
+Request Body (DTO: CreateOrganizationDto):
+
+json
+Copy code
+{
+  "name": "string",
+  "address": "string",
+  ...
+}
+
+
+
+2. Get All Organizations
+Method: GET
+
+Endpoint: /organizations
+
+
+
+3. Get One Organization
+Method: GET
+
+Endpoint: /organizations/:id
+
+URL Param:
+
+id: string (organization ID)
+
+
+4. Update Organization
+Method: PUT
+
+Endpoint: /organizations/:id
+
+URL Param:
+
+id: string (organization ID)
+
+Request Body (DTO: UpdateOrganizationDto):
+
+json
+Copy code
+{
+  "name": "updated name",
+  "address": "updated address",
+  ...
+}
+
+5. Delete Organization
+Method: DELETE
+
+Endpoint: /organizations/:id
+
+URL Param:
+
+id: string (organization ID)
+
+
+
+
+
+
+
+📤 Upload a Process Flow File
+Method: POST
+
+Endpoint: /process-flows/upload
+
+Consumes: multipart/form-data
+
+Form Field:
+
+file: the file to upload
+
+
+
+1. Create Station
+Method: POST
+
+Endpoint: /stations
+
+Request Body (CreateStationDto):
+
+json
+Copy code
+{
+  "name": "string",
+  "description": "string",
+  ...
+}
+
+2. Get All Stations
+Method: GET
+
+Endpoint: /stations
+
+
+3. Get One Station
+Method: GET
+
+Endpoint: /stations/:stationId
+
+URL Param:
+
+stationId: string
+
+4. Update Station
+Method: PATCH
+
+Endpoint: /stations/:stationId
+
+URL Param:
+
+stationId: string
+
+Request Body (UpdateStationDto):
+
+json
+Copy code
+{
+  "name": "updated name",
+  "description": "updated description",
+  ...
+}
+
+
+5. Delete Station
+Method: DELETE
+
+Endpoint: /stations/:stationId
+
+URL Param:
+
+stationId: string
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

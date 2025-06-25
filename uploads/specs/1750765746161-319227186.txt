@@ -1,0 +1,1021 @@
+{% load urlencode_filters %}
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOM Management Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            sidebar: {
+              DEFAULT: 'transparent',
+              border: '#e0e0e0',
+              hover: 'rgba(0, 0, 0, 0.05)',
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Ensure table headers display full text */
+    .bom-table {
+      min-width: 1800px;
+      table-layout: auto;
+    }
+    .bom-table th {
+      white-space: nowrap;
+      padding: 8px 12px;
+    }
+    
+    /* Pagination styles */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 1rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .pagination a, .pagination span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 0.5rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+    
+    .pagination a {
+      background-color: #f3f4f6;
+      color: #374151;
+    }
+    
+    .dark .pagination a {
+      background-color: #374151;
+      color: #f3f4f6;
+    }
+    
+    .pagination a:hover {
+      background-color: #e5e7eb;
+    }
+    
+    .dark .pagination a:hover {
+      background-color: #4b5563;
+    }
+    
+    .pagination .current {
+      background-color: #3b82f6;
+      color: white;
+    }
+    
+    .dark .pagination .current {
+      background-color: #2563eb;
+    }
+
+    /* Active sidebar button styling */
+    .sidebar-button-active {
+      background-color: #3b82f6 !important;
+      color: white !important;
+    }
+    
+    .dark .sidebar-button-active {
+      background-color: #2563eb !important;
+      color: white !important;
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 768px) {
+      .sidebar-collapsed {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 15;
+      }
+
+      /* Ensure sidebar is above overlay on mobile */
+      #sidebar {
+        z-index: 20 !important;
+      }
+
+      /* Make sure sidebar buttons are clickable */
+      #sidebar a, #sidebar button {
+        pointer-events: auto;
+        position: relative;
+        z-index: 21;
+      }
+
+      .mobile-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .mobile-table {
+        min-width: 100%;
+        font-size: 0.75rem;
+      }
+
+      .mobile-table th,
+      .mobile-table td {
+        padding: 0.5rem 0.25rem;
+        min-width: 80px;
+      }
+    }
+
+    /* Tablet responsive adjustments */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .tablet-sidebar {
+        width: 200px;
+      }
+      
+      .tablet-main {
+        margin-left: 200px;
+      }
+    }
+    
+  </style>
+</head>
+
+<body class="bg-white text-black dark:bg-gray-900 dark:text-white transition-colors duration-300">
+  <!-- Mobile overlay for sidebar -->
+  <div id="sidebar-overlay" class="sidebar-overlay hidden md:hidden" onclick="toggleMobileSidebar()"></div>
+
+  <header class="bg-gray-800 text-white dark:bg-gray-900 dark:text-white p-4 shadow-md fixed top-0 left-0 right-0 z-20">
+    <div class="flex justify-between items-center"> 
+      <div class="flex items-center gap-2 md:gap-4">
+        <!-- Mobile menu button -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 rounded-full hover:bg-gray-700 dark:hover:bg-gray-800" onclick="toggleMobileSidebar()">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        
+        {% if user.is_authenticated %}
+        <span class="text-xs md:text-sm truncate">Logged in as: {{ user.username }}</span>
+        {% endif %}
+        
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-700 dark:hover:bg-gray-800" onclick="toggleTheme()">
+          <svg id="sun-icon" class="w-4 h-4 md:w-5 md:h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg id="moon-icon" class="w-4 h-4 md:w-5 md:h-5 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div> 
+    </div>
+  </header>
+
+  <div class="flex flex-1 pt-16">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-16 left-0 h-[calc(100vh-4rem)] w-[250px] md:w-[250px] lg:w-[250px] p-4 flex flex-col border-r border-gray-200 dark:border-gray-700 transition-all duration-300 bg-white dark:bg-gray-900 overflow-y-auto sidebar-collapsed md:translate-x-0" style="z-index: 20;">
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <button class="w-full text-left font-medium hidden md:block" onclick="toggleSidebar()">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <span id="sidebar-title" class="sidebar-text">Menu</span>
+          </div>
+        </button>
+        
+        <!-- Mobile close button -->
+        <button class="md:hidden p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" onclick="toggleMobileSidebar()">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      {% if user.is_authenticated %}
+      <div class="flex-1 flex flex-col space-y-2">
+        <!-- Upload File Button -->
+        <a href="?show_upload_form=1" onclick="handleMobileSidebarClick()" class="w-full flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors {% if request.GET.show_upload_form %}sidebar-button-active{% endif %}">
+          <svg class="w-5 h-5 mr-3 sidebar-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <span class="sidebar-text text-sm md:text-base">Upload File</span>
+        </a>
+
+        <!-- Show All Orders Button -->
+        <a href="?show_orders=1" onclick="handleMobileSidebarClick()" class="w-full flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors {% if request.GET.show_orders and not request.GET.order_id %}sidebar-button-active{% endif %}">
+          <svg class="w-5 h-5 mr-3 sidebar-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span class="sidebar-text text-sm md:text-base">Orders</span>
+        </a>
+
+        <!-- Part Search Button -->
+        <a href="?show_part_search_form=1" onclick="handleMobileSidebarClick()" class="w-full flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors {% if request.GET.show_part_search_form %}sidebar-button-active{% endif %}">
+          <svg class="w-5 h-5 mr-3 sidebar-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M16 10.5A5.5 5.5 0 105.5 16 5.5 5.5 0 0016 10.5z" />
+          </svg>
+          <span class="sidebar-text text-sm md:text-base">Part Search</span>
+        </a>
+      </div>
+
+      <!-- Logout -->
+      <form method="post" action="{% url 'logout' %}" class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700" novalidate>
+        {% csrf_token %}
+        <button type="submit" class="w-full flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <svg class="w-5 h-5 mr-3 sidebar-icon flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span class="sidebar-text text-sm md:text-base">Logout</span>
+        </button>
+      </form>
+      {% else %}
+      <p class="text-gray-500 dark:text-gray-400 text-sm">You are not logged in.</p>
+      {% endif %}
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-grow p-3 md:p-6 ml-0 md:ml-[250px] transition-all duration-300 overflow-x-auto">
+      <!-- Messages -->
+      {% if messages %}
+      <div class="mb-4 md:mb-6" role="alert">
+        {% for message in messages %}
+        <div class="p-3 md:p-4 mb-2 rounded-lg text-sm md:text-base {% if message.tags == 'success' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100{% elif message.tags == 'error' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100{% else %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100{% endif %}">
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Upload form only shown if ?show_upload_form=1 in URL -->
+      {% if request.GET.show_upload_form %}
+      <section class="mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4">Upload BOM File</h2>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 md:p-6 mb-4 md:mb-6 shadow-sm">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <div class="mb-4">
+              {{ form.file }}
+            </div>
+            <button type="submit" name="file_upload" class="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm md:text-base">
+              Submit File
+            </button>
+          </form>
+          
+          {% if unique_components_count is not none %}
+          <div class="mt-4 md:mt-6">
+            <h3 class="text-base md:text-lg font-semibold mb-2 md:mb-3">Component Summary</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full border-collapse text-sm md:text-base">
+                <thead>
+                  <tr class="bg-gray-100 dark:bg-gray-700">
+                    <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Category</th>
+                    <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 font-medium">Unique Components Count</td>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ unique_components_count }}</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 font-medium">Part not found</td>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ part_not_found }}</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 font-medium">Do not populate</td>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ do_not_populate }}</td>
+                  </tr>
+                  <tr>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 font-medium">Part Consigned / Ignored</td>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ part_consigned }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- Order Details -->
+      {% if order_details %}
+      <section class="mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4">Order Details</h2>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 md:p-6 shadow-sm">
+          <table class="min-w-full border-collapse text-sm md:text-base">
+            <tr>
+              <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700">Order ID</th>
+              <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ order_details.order_id }}</td>
+            </tr>
+          </table>
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- Back to Orders Link -->
+      {% if request.GET.order_id and bom_data %}
+      <div class="mb-3 md:mb-4">
+        <a href="?show_orders=1" class="inline-flex items-center px-3 md:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm md:text-base">
+          <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Orders
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- BOM Search Results -->
+      {% if search_results %}
+      <section class="mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4">Order Details for Order ID: {{ order_search_form.cleaned_data.order_id }}</h2>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 md:p-6 shadow-sm">
+          <div class="mobile-table-container">
+            <table class="bom-table mobile-table min-w-full border-collapse">
+              <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700">
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Qty</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Reference Designator</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Manufacturer</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Manufacturer Part Number</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Supplier</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Supplier Part Number</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Package</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Quantity Required</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Quantity Purchased</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Unit Price</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Ext Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in search_results %}
+                <tr class="{% cycle 'bg-white dark:bg-gray-800' 'bg-gray-50 dark:bg-gray-700' %}">
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.qty }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.reference_designator }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.manufacturer }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">
+                    {% with row.component|lower as component_value %}
+                      {% if component_value in "cna,-,#n/a,n/a,dnp,dni1,dni2,dni3,do not stuff,-dni,none,no load,[noparam],np,generic,do not place,no pop 1,no pop" %}
+                        {{ row.component }}
+                      {% else %}
+                        {% with row.component|urlencode as encoded_name %}
+                          <a href="{% url 'component_detail' encoded_name %}" class="text-blue-600 hover:underline">
+                            {{ row.component }}
+                          </a>
+                        {% endwith %}
+                      {% endif %}
+                    {% endwith %}
+                  </td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.supplier }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.supplier_component }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.package }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.quantity_required }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.quantity_purchased }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.unit_price }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.ext_price }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if search_results.paginator.num_pages > 1 %}
+          <div class="pagination mt-4">
+            {% if search_results.has_previous %}
+              <a href="?{{ search_query_params }}&page=1" aria-label="First page">&laquo;&laquo;</a>
+              <a href="?{{ search_query_params }}&page={{ search_results.previous_page_number }}" aria-label="Previous page">&laquo;</a>
+            {% endif %}
+            
+            {% for i in search_results.paginator.page_range %}
+              {% if search_results.number == i %}
+                <span class="current">{{ i }}</span>
+              {% elif i > search_results.number|add:'-3' and i < search_results.number|add:'3' %}
+                <a href="?{{ search_query_params }}&page={{ i }}">{{ i }}</a>
+              {% endif %}
+            {% endfor %}
+            
+            {% if search_results.has_next %}
+              <a href="?{{ search_query_params }}&page={{ search_results.next_page_number }}" aria-label="Next page">&raquo;</a>
+              <a href="?{{ search_query_params }}&page={{ search_results.paginator.num_pages }}" aria-label="Last page">&raquo;&raquo;</a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+      {% elif search_results is not none %}
+      <div class="p-3 md:p-4 mb-4 md:mb-6 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 rounded-lg text-sm md:text-base">
+        No results found for that Order ID.
+      </div>
+      {% endif %}
+
+      <!-- Filter Dropdown -->
+      {% if request.GET.show_orders and not request.GET.order_id %}
+      <div class="mb-4 md:mb-6">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 md:p-6 shadow-sm">
+          <button id="filterButton" class="w-full md:w-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors mb-4 text-sm md:text-base" onclick="toggleFilterForm()">
+            Filter By
+          </button>
+
+          <form id="filterForm" method="get" class="{% if not request.GET.filter_order_id and not request.GET.from_date and not request.GET.to_date %}hidden{% endif %} p-3 md:p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+            <input type="hidden" name="show_orders" value="1">
+            <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 items-start md:items-end">
+              <div class="w-full md:w-auto">
+                <label for="filter_order_id" class="block text-sm font-medium mb-1">Order ID</label>
+                <input type="text" id="filter_order_id" name="filter_order_id" placeholder="Order ID" value="{{ filter_order_id }}" class="w-full md:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm">
+              </div>
+              <div class="w-full md:w-auto">
+                <label for="from_date" class="block text-sm font-medium mb-1">From Date</label>
+                <input type="date" id="from_date" name="from_date" value="{{ from_date }}" class="w-full md:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm">
+              </div>
+              <div class="w-full md:w-auto">
+                <label for="to_date" class="block text-sm font-medium mb-1">To Date</label>
+                <input type="date" id="to_date" name="to_date" value="{{ to_date }}" class="w-full md:w-auto p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm">
+              </div>
+              <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                <button type="submit" class="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm">
+                  Apply
+                </button>
+                <a href="{% url 'uploadf' %}?show_orders=1" class="w-full md:w-auto px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors inline-block text-center text-sm">
+                  Reset
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- All Orders -->
+      {% if request.GET.show_orders and not request.GET.order_id %}
+      <section class="mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4">All Uploaded Orders</h2>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 md:p-6 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="min-w-full border-collapse text-sm md:text-base">
+              <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700">
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Order ID</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Filename</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Upload Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for order in all_orders %}
+                <tr class="{% cycle 'bg-white dark:bg-gray-800' 'bg-gray-50 dark:bg-gray-700' %}">
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">
+                    <a href="?show_orders=1&order_id={{ order.order_id }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                      {{ order.order_id }}
+                    </a>
+                  </td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 break-words">{{ order.filename }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ order.upload_date }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="p-3 md:p-4 text-center text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                    No orders found.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination for orders -->
+          {% if all_orders.paginator.num_pages > 1 %}
+          <div class="pagination mt-4">
+            {% if all_orders.has_previous %}
+              <a href="?show_orders=1{% if filter_order_id %}&filter_order_id={{ filter_order_id }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}&orders_page=1" aria-label="First page">&laquo;&laquo;</a>
+              <a href="?show_orders=1{% if filter_order_id %}&filter_order_id={{ filter_order_id }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}&orders_page={{ all_orders.previous_page_number }}" aria-label="Previous page">&laquo;</a>
+            {% endif %}
+            
+            {% for i in all_orders.paginator.page_range %}
+              {% if all_orders.number == i %}
+                <span class="current">{{ i }}</span>
+              {% elif i > all_orders.number|add:'-3' and i < all_orders.number|add:'3' %}
+                <a href="?show_orders=1{% if filter_order_id %}&filter_order_id={{ filter_order_id }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}&orders_page={{ i }}">{{ i }}</a>
+              {% endif %}
+            {% endfor %}
+            
+            {% if all_orders.has_next %}
+              <a href="?show_orders=1{% if filter_order_id %}&filter_order_id={{ filter_order_id }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}&orders_page={{ all_orders.next_page_number }}" aria-label="Next page">&raquo;</a>
+              <a href="?show_orders=1{% if filter_order_id %}&filter_order_id={{ filter_order_id }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}&orders_page={{ all_orders.paginator.num_pages }}" aria-label="Last page">&raquo;&raquo;</a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- BOM Data by Selected Order -->
+      {% if request.GET.show_orders and request.GET.order_id and bom_data %}
+      <section class="mb-6 md:mb-8">
+        <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4">Order Details for Order ID: {{ request.GET.order_id }}</h2>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 md:p-6 shadow-sm">
+          <div class="mobile-table-container">
+            <table class="bom-table mobile-table min-w-full border-collapse">
+              <thead>
+                <tr class="bg-gray-100 dark:bg-gray-700">
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Qty</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Reference Designator</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Manufacturer</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Manufacturer Part Number</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Supplier</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Supplier Part Number</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Package</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Quantity Required</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Quantity Purchased</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Unit Price</th>
+                  <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600 text-xs md:text-sm">Ext Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in bom_data %}
+                <tr class="{% cycle 'bg-white dark:bg-gray-800' 'bg-gray-50 dark:bg-gray-700' %}">
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.qty }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.reference_designator }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.manufacturer }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">
+                    {% with row.component|lower as component_value %}
+                      {% if component_value in "cna,-,#n/a,n/a,dnp,dni1,dni2,dni3,do not stuff,-dni,none,no load,[noparam],np,generic,do not place,no pop 1,no pop" %}
+                        {{ row.component }}
+                      {% else %}
+                        {% with row.component|urlencode as encoded_name %}
+                          <a href="{% url 'component_detail' encoded_name %}" class="text-blue-600 hover:underline">
+                            {{ row.component }}
+                          </a>
+                        {% endwith %}
+                      {% endif %}
+                    {% endwith %}
+                  </td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.supplier }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.supplier_component }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.package }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.quantity_required }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.quantity_purchased }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.unit_price }}</td>
+                  <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600 text-xs md:text-sm">{{ row.ext_price }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination for BOM data -->
+          {% if bom_data.paginator.num_pages > 1 %}
+          <div class="pagination mt-4">
+            {% if bom_data.has_previous %}
+              <a href="?show_orders=1&order_id={{ request.GET.order_id }}&bom_page=1" aria-label="First page">&laquo;&laquo;</a>
+              <a href="?show_orders=1&order_id={{ request.GET.order_id }}&bom_page={{ bom_data.previous_page_number }}" aria-label="Previous page">&laquo;</a>
+            {% endif %}
+            
+            {% for i in bom_data.paginator.page_range %}
+              {% if bom_data.number == i %}
+                <span class="current">{{ i }}</span>
+              {% elif i > bom_data.number|add:'-3' and i < bom_data.number|add:'3' %}
+                <a href="?show_orders=1&order_id={{ request.GET.order_id }}&bom_page={{ i }}">{{ i }}</a>
+              {% endif %}
+            {% endfor %}
+            
+            {% if bom_data.has_next %}
+              <a href="?show_orders=1&order_id={{ request.GET.order_id }}&bom_page={{ bom_data.next_page_number }}" aria-label="Next page">&raquo;</a>
+              <a href="?show_orders=1&order_id={{ request.GET.order_id }}&bom_page={{ bom_data.paginator.num_pages }}" aria-label="Last page">&raquo;&raquo;</a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- Part Search Form -->
+      {% if request.GET.show_part_search_form %}
+      <section class="mb-6 md:mb-8" id="part-search-section">
+        <h2 class="text-xl md:text-2xl font-bold mb-3 md:mb-4">Search for Component</h2>
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 md:p-6 mb-4 md:mb-6 shadow-sm">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="component_search_submit" value="1" />
+            <div class="mb-4">
+              <label for="component_search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Enter Part Number</label>
+              <div class="flex flex-col md:flex-row gap-2">
+                <input 
+                  type="text" 
+                  name="component_search" 
+                  id="component_search" 
+                  placeholder="Search part number..." 
+                  class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-900 dark:text-white text-sm md:text-base"
+                  value="{{ component_search_query|default:'' }}"
+                >
+                <button type="submit" class="w-full md:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm md:text-base">
+                  <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M16 10.5A5.5 5.5 0 105.5 16 5.5 5.5 0 0016 10.5z" />
+                  </svg>
+                  Search
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {% if component_search_results %}
+          <div class="mt-4 md:mt-6">
+            <h3 class="text-base md:text-lg font-semibold mb-2 md:mb-3">Search Results</h3>
+            <h4 class="text-sm md:text-base">Component Search Results</h4>
+            <p class="text-sm md:text-base"><strong>Source:</strong> {{ component_search_source }}</p>
+            <div class="overflow-x-auto">
+              <table class="min-w-full border-collapse text-sm md:text-base">
+                <thead>
+                  <tr class="bg-gray-100 dark:bg-gray-700">
+                    <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Part Number</th>
+                    <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Source</th>
+                    <th class="p-2 md:p-3 text-left font-medium border border-gray-200 dark:border-gray-600">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for part in component_search_results %}
+                  <tr class="border-b border-gray-200 dark:border-gray-700">
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ part.manufacturer_part_number }}</td>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">{{ part.source }}</td>
+                    <td class="p-2 md:p-3 border border-gray-200 dark:border-gray-600">
+                      {{ part.date|default:"-" }}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Component Details Display (Below Table) -->
+            {% for part in component_search_results %}
+            <div class="mt-6 md:mt-8 component-data-display space-y-3 md:space-y-4 max-w-4xl">
+              
+              <!-- Component Header -->
+              <div class="bg-gray-50 dark:bg-gray-700 p-3 md:p-4 rounded-lg">
+                <h4 class="font-bold text-base md:text-lg text-blue-600 dark:text-blue-400">
+                  {{ part.data.ManufacturerPartNumber|default:"N/A" }}
+                </h4>
+                <p class="text-xs md:text-sm text-gray-700 dark:text-gray-300 mt-1">
+                  {{ part.data.Description|default:"No description available" }}
+                </p>
+                <div class="flex flex-wrap gap-1 md:gap-2 mt-2">
+                  <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
+                    {{ part.data.Manufacturer|default:"Unknown" }}
+                  </span>
+                  {% if part.data.ROHSStatus %}
+                  <span class="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs">
+                    {{ part.data.ROHSStatus }}
+                  </span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Basic Information -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                  <h5 class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-200">Basic Information</h5>
+                  <div class="space-y-1 text-xs">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Manufacturer:</span>
+                      <span class="font-medium">{{ part.data.Manufacturer|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Part Number:</span>
+                      <span class="font-medium">{{ part.data.ManufacturerPartNumber|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Supplier Part:</span>
+                      <span class="font-medium">{{ part.data.MouserPartNumber|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Category:</span>
+                      <span class="font-medium">{{ part.data.Category|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Min Order:</span>
+                      <span class="font-medium">{{ part.data.Min|default:"N/A" }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Availability & Stock -->
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                  <h5 class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-200">Availability & Stock</h5>
+                  <div class="space-y-1 text-xs">
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Availability:</span>
+                      <span class="font-medium text-green-600 dark:text-green-400">{{ part.data.Availability|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Factory Stock:</span>
+                      <span class="font-medium">{{ part.data.FactoryStock|default:"0" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">Lead Time:</span>
+                      <span class="font-medium text-orange-600 dark:text-orange-400">{{ part.data.LeadTime|default:"N/A" }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-600 dark:text-gray-400">In Stock:</span>
+                      <span class="font-medium">{{ part.data.AvailabilityInStock|default:"0" }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Price Breaks -->
+              {% if part.data.PriceBreaks %}
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                <h5 class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-200">Price Breaks</h5>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-xs">
+                    <thead>
+                      <tr class="border-b border-gray-200 dark:border-gray-600">
+                        <th class="text-left py-1 px-2 text-gray-600 dark:text-gray-400">Quantity</th>
+                        <th class="text-left py-1 px-2 text-gray-600 dark:text-gray-400">Unit Price</th>
+                        <th class="text-left py-1 px-2 text-gray-600 dark:text-gray-400">Currency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for price in part.data.PriceBreaks %}
+                      <tr class="border-b border-gray-100 dark:border-gray-700">
+                        <td class="py-1 px-2 font-medium">{{ price.Quantity|floatformat:0 }}</td>
+                        <td class="py-1 px-2 font-medium text-green-600 dark:text-green-400">{{ price.Price }}</td>
+                        <td class="py-1 px-2">{{ price.Currency }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Product Attributes -->
+              {% if part.data.ProductAttributes %}
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                <h5 class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-200">Product Attributes</h5>
+                <div class="space-y-1 text-xs">
+                  {% for attr in part.data.ProductAttributes %}
+                  <div class="flex justify-between items-start">
+                    <span class="text-gray-600 dark:text-gray-400 min-w-0 flex-shrink-0 mr-2">{{ attr.AttributeName }}:</span>
+                    <div class="text-right">
+                      <span class="font-medium">{{ attr.AttributeValue }}</span>
+                      {% if attr.AttributeCost %}
+                      <div class="text-orange-600 dark:text-orange-400 text-xs mt-1">{{ attr.AttributeCost }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Links and Resources -->
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                <h5 class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-200">Links & Resources</h5>
+                <div class="flex flex-wrap gap-2">
+                  {% if part.data.DataSheetUrl %}
+                  <a href="{{ part.data.DataSheetUrl }}" target="_blank" rel="noopener noreferrer" 
+                     class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 rounded text-xs transition-colors">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Datasheet
+                  </a>
+                  {% endif %}
+                  
+                  {% if part.data.ProductDetailUrl %}
+                  <a href="{{ part.data.ProductDetailUrl }}" target="_blank" rel="noopener noreferrer"
+                     class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 rounded text-xs transition-colors">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    View on Mouser
+                  </a>
+                  {% endif %}
+                </div>
+
+                <!-- Alternate Packaging -->
+                {% if part.data.AlternatePackagings %}
+                <div class="mt-3">
+                  <span class="text-xs text-gray-600 dark:text-gray-400">Alternate Packaging:</span>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    {% for alt in part.data.AlternatePackagings %}
+                    <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">
+                      {{ alt.APMfrPN }}
+                    </span>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Compliance Information -->
+              {% if part.data.ProductCompliance %}
+              <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                <h5 class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-200">Compliance Information</h5>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                  {% for compliance in part.data.ProductCompliance %}
+                  <div class="flex flex-col">
+                    <span class="text-gray-600 dark:text-gray-400">{{ compliance.ComplianceName }}:</span>
+                    <span class="font-medium">{{ compliance.ComplianceValue }}</span>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Other Data -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mt-4 md:mt-6">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                  <h5 class="font-semibold text-sm mb-2 text-gray-800 dark:text-gray-200">Other Data</h5>
+                  <div class="space-y-1 text-xs">
+                    {% for key, value in part.data.items %}
+                      {% if key not in excluded_keys %}
+                        <div class="flex justify-between">
+                          <span class="text-gray-600 dark:text-gray-400">{{ key }}:</span>
+                          <span class="font-medium break-words text-right max-w-xs">{{ value|default:"-" }}</span>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Search Metadata -->
+              <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded text-xs text-gray-600 dark:text-gray-400">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-1 md:gap-0">
+                  <span>Source: {{ part.source|default:"Mouser Electronics" }}</span>
+                  <span>Search Date: {{ part.date|date:"M d, Y"|default:"N/A" }}</span>
+                </div>
+              </div>
+
+            </div>
+            {% endfor %}
+
+          </div>
+          {% elif component_search_query %}
+          <p class="text-sm mt-4 text-red-600 dark:text-red-400">No results found for "{{ component_search_query }}"</p>
+          {% endif %}
+        </div>
+      </section>
+      {% endif %}
+
+    </main>
+  </div>
+
+  <script>
+    // Handle mobile sidebar click
+    function handleMobileSidebarClick() {
+      if (window.innerWidth < 768) {
+        // Small delay to ensure navigation happens before sidebar closes
+        setTimeout(() => {
+          toggleMobileSidebar();
+        }, 100);
+      }
+    }
+
+    // Toggle mobile sidebar function
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      
+      if (sidebar.classList.contains('sidebar-collapsed')) {
+        // Show sidebar
+        sidebar.classList.remove('sidebar-collapsed');
+        overlay.classList.remove('hidden');
+    // Prevent body scroll when sidebar is open
+    document.body.style.overflow = 'hidden';
+  } else {
+    // Hide sidebar
+    sidebar.classList.add('sidebar-collapsed');
+    overlay.classList.add('hidden');
+    // Restore body scroll
+    document.body.style.overflow = '';
+  }
+}
+
+    // Toggle desktop sidebar function
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('main-content');
+      const sidebarTexts = document.querySelectorAll('.sidebar-text');
+      
+      if (sidebar.classList.contains('w-[60px]')) {
+        // Expand sidebar
+        sidebar.classList.remove('w-[60px]');
+        sidebar.classList.add('w-[250px]');
+        mainContent.classList.remove('ml-[60px]');
+        mainContent.classList.add('ml-[250px]');
+        
+        // Show text in sidebar
+        sidebarTexts.forEach(text => text.classList.remove('hidden'));
+      } else {
+        // Collapse sidebar
+        sidebar.classList.remove('w-[250px]');
+        sidebar.classList.add('w-[60px]');
+        mainContent.classList.remove('ml-[250px]');
+        mainContent.classList.add('ml-[60px]');
+        
+        // Hide text in sidebar
+        sidebarTexts.forEach(text => text.classList.add('hidden'));
+      }
+    }
+    
+    // Toggle filter form
+    function toggleFilterForm() {
+      const filterForm = document.getElementById('filterForm');
+      if (filterForm.classList.contains('hidden')) {
+        filterForm.classList.remove('hidden');
+      } else {
+        filterForm.classList.add('hidden');
+      }
+    }
+    
+    // Toggle theme function
+    function toggleTheme() {
+      const sunIcon = document.getElementById('sun-icon');
+      const moonIcon = document.getElementById('moon-icon');
+      
+      if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+        sunIcon.classList.remove('hidden');
+        moonIcon.classList.add('hidden');
+      } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+      }
+    }
+    
+    // Initialize the page
+    document.addEventListener("DOMContentLoaded", () => {
+      // Load saved theme
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.getElementById('sun-icon').classList.add('hidden');
+        document.getElementById('moon-icon').classList.remove('hidden');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('sun-icon').classList.remove('hidden');
+        document.getElementById('moon-icon').classList.add('hidden');
+      }
+
+      // Handle window resize for responsive behavior
+      function handleResize() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        if (window.innerWidth >= 768) {
+          // Desktop view - ensure sidebar is visible and overlay is hidden
+          sidebar.classList.remove('sidebar-collapsed');
+          overlay.classList.add('hidden');
+        } else {
+          // Mobile view - ensure sidebar is hidden initially
+          sidebar.classList.add('sidebar-collapsed');
+          overlay.classList.add('hidden');
+        }
+      }
+
+      // Initial call and event listener
+      handleResize();
+      window.addEventListener('resize', handleResize);
+    });
+  </script>
+</body>
+</html>

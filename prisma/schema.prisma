@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum inputType {  
+  TEXT
+  CHECKBOX
+  DROPDOWN
+  FILE_UPLOAD
+  number
+}
+
+enum OrderType {
+  LEADED_SN_PB_CLEAN
+  LEADED_SN_PB_NO_CLEAN
+  MEDICAL
+  ROHS_PB_FREE_CLEAN
+  ROHS_PB_FREE_NO_CLEAN
+  DEFENSE
+}
+
+
+
+
+enum FileAction {
+  REPLACE_EARLIER_REVISION
+  ADD_THIS_REVISION
+  PULL_FROM_FILES
+}
+model MPI {
+  id                        String                  @id @default(cuid())
+jobId                       String                  @unique
+assemblyId                  String                  @unique
+  customer            String?
+  stations                 Station[]
+  orderForms   OrderForm[]  
+   checklists               Checklist[]
+   changeOrders   ChangeOrder[]   
+}
+model Station {
+  id            String         @id @default(cuid())
+  stationId     String         @unique
+  stationName   String
+  specifications Specification[]
+  mpiId         String?
+  mpi           MPI?           @relation(fields: [mpiId], references: [id])
+
+  // New fields
+  status        String?
+  description   String?
+  location      String?
+  operator     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  isDeleted     Boolean        @default(false)
+  // New relations
+  documentations Documentation[]
+  flowcharts     Flowchart[]
+  stationSpecifications StationSpecification[]
+}
+
+model Documentation {
+  id          String   @id @default(cuid())
+  fileUrl     String?  // Optional file URL or path
+  description String?  // Optional description
+  stationId   String
+  station     Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Flowchart {
+  id          String   @id @default(cuid())
+  fileUrl     String?  // Optional file URL or path
+  description String?  // Optional description
+  stationId   String
+  station     Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+model Specification {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  inputType         inputType     @default(TEXT)
+suggestions  String[]  
+required     Boolean       @default(false) // Used for CHECKBOX    
+  stationId String
+  station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+    stationSpecifications StationSpecification[]
+
+}
+
+
+ model StationSpecification {
+   id             String        @id @default(cuid())
+   specificationId String
+   stationId      String
+   station        Station       @relation(fields: [stationId], references: [id], onDelete: Cascade)
+     value          String
+   unit             String?
+  specification  Specification @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+
+  @@unique([stationId, specificationId]) // prevents duplicate entries for same station+spec
+ }
+
+
+
+
+model OrderForm {
+  id                  String           @id @default(cuid())
+  orderType           OrderType[]      // ✅ use enum array
+  distributionDate    DateTime?
+  requiredBy          DateTime?
+
+  internalOrderNumber String?
+  revision            String?
+  otherAttachments    String?
+ fileAction          FileAction[]
+  markComplete        Boolean          @default(false)
+
+  documentControl     DocumentControl? @relation("OrderFormToDocControl")
+  documentControlId   String?          @unique
+
+  mpiId               String?
+  mpi                 MPI?             @relation(fields: [mpiId], references: [id])
+}
+
+
+model DocumentControl {
+  id              String      @id @default(cuid())
+  dateProcessed   DateTime?
+  clerkName       String?
+  totalPageCount  Int?
+  mamsDataEntry   String?
+  description     String?
+  enteredBy       String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orderFormId     String?     @unique
+  orderForm       OrderForm?  @relation("OrderFormToDocControl", fields: [orderFormId], references: [id])
+}
+
+
+
+
+model Checklist {
+  id             String           @id @default(cuid())
+  name           String
+  mpiId          String?          // ✅ Relation to MPI
+  mpi            MPI?             @relation(fields: [mpiId], references: [id])
+  checklistItems ChecklistItem[] // ✅ Items under this checklist
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+model ChecklistItem {
+  id           String           @id @default(cuid())
+  description  String
+  category     String?
+  required     Boolean          @default(true)
+  remarks      String?
+  isActive     Boolean          @default(true)
+  createdBy    String?
+  sectionId    String
+  section      Checklist        @relation(fields: [sectionId], references: [id])
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @default(now()) @updatedAt
+}
+
+
+enum ChangeOrderSectionType {
+  CUSTOMER_ECO
+  CUSTOMER_DEVIATION
+  BOM_FOR_ASSEMBLY
+  PULL_LIST_FOR_ASSEMBLY
+  DRAWING_FOR_ASSEMBLY
+  SPECIAL_INSTRUCTIONS
+  MPI_FOR_ASSEMBLY
+  AVL_FOR
+  OTHER_ATTACHMENTS
+}
+
+model ChangeOrder {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  section         ChangeOrderSectionType
+
+  value           String?
+  replaceEarlier  Boolean  @default(false)
+  addRevision     Boolean  @default(false)
+  pullFromFiles   String?
+  mpiId     String?
+  mpi       MPI?    @relation(fields: [mpiId], references: [id])
+
+
+}
+
