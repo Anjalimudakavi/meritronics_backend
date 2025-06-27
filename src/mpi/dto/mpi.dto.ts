@@ -249,6 +249,22 @@ import { Type } from 'class-transformer';
 import { CreateStationDto, UpdateStationDto } from '../../station/dto/station.dto';
 import { OrderType, FileAction } from '@prisma/client';
 
+
+
+export class CreateMpiDocumentationDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  fileUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
+
 class CreateOrderFormDto {
   // @IsOptional()
   // @IsArray()
@@ -318,7 +334,13 @@ export class CreateChecklistItemDto {
 }
 
 
+
+
+
 export class CreateChecklistDto {
+    @IsString()
+  @IsOptional()
+  id?: string;
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -349,11 +371,26 @@ export class CreateMpiDto {
   @IsString()
   customer?: string;
 
+
+   
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  Instruction?: string[];
+
+
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateStationDto)
   stations?: CreateStationDto[];
+
+
+  @IsOptional()
+@IsArray()
+@ValidateNested({ each: true })
+@Type(() => CreateMpiDocumentationDto)
+mpiDocs?: CreateMpiDocumentationDto[];
 
   @IsOptional()
   @IsArray()
@@ -362,7 +399,25 @@ export class CreateMpiDto {
   checklists?: CreateChecklistDto[];
 }
 
+export class UpdateMpiDocumentationDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  fileUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
+
+
 class UpdateChecklistItemDto {
+    @IsString()
+  @IsOptional()
+  id?: string;
   @IsOptional()
   @IsString()
   description?: string;
@@ -387,6 +442,10 @@ class UpdateChecklistItemDto {
 }
 
 class UpdateChecklistDto {
+    @IsString()
+  @IsOptional()
+  id?: string;
+
   @IsOptional()
   @IsString()
   name?: string;
@@ -396,6 +455,39 @@ class UpdateChecklistDto {
   @ValidateNested({ each: true })
   @Type(() => UpdateChecklistItemDto)
   checklistItems?: UpdateChecklistItemDto[];
+}
+class UpdateOrderFormDto {
+  @IsOptional()
+  @IsArray()
+  @IsEnum(OrderType, { each: true })
+  orderType?: OrderType[];
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  distributionDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  requiredBy?: Date;
+
+  @IsOptional()
+  @IsString()
+  internalOrderNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  revision?: string;
+
+  @IsOptional()
+  @IsString()
+  otherAttachments?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(FileAction, { each: true })
+  fileAction?: FileAction[];
 }
 
 export class UpdateMpiDto {
@@ -407,10 +499,29 @@ export class UpdateMpiDto {
   @IsString()
   assemblyId?: string;
 
+    @IsOptional()
+  @IsString()
+  customer?: string; // ✅ ADD THIS
+
+
   @IsOptional()
-  @ValidateNested()
-  @Type(() => CreateOrderFormDto)
-  orderForm?: CreateOrderFormDto;
+  @IsArray()
+  @IsString({ each: true })
+  Instruction?: string[];
+
+
+ @IsOptional()
+@ValidateNested()
+@Type(() => UpdateOrderFormDto)
+orderForms?: UpdateOrderFormDto;
+
+
+@IsOptional()
+@IsArray()
+@ValidateNested({ each: true })
+@Type(() => UpdateMpiDocumentationDto)
+mpiDocs?: UpdateMpiDocumentationDto[];
+
 
   @IsOptional()
   @IsArray()

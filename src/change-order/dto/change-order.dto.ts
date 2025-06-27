@@ -1,50 +1,81 @@
+
+
+// // import {
+// //   IsOptional,
+// //   IsString,
+// //   IsBoolean,
+// //   IsEnum,
+// // } from 'class-validator';
+// // import { ChangeOrderSectionType } from '@prisma/client';
+
+// // export class CreateChangeOrderDto {
+// //   @IsEnum(ChangeOrderSectionType)
+// //   section: ChangeOrderSectionType;
+
+// //   @IsOptional()
+// //   @IsString()
+// //   value?: string;
+
+// //   @IsOptional()
+// //   @IsBoolean()
+// //   replaceEarlier?: boolean;
+
+// //   @IsOptional()
+// //   @IsBoolean()
+// //   addRevision?: boolean;
+
+// //   @IsOptional()
+// //   @IsString()
+// //   pullFromFiles?: string;
+
+// //   @IsOptional()
+// //   @IsString()
+// //   mpiId?: string;
+// // }
+
+// // export class UpdateChangeOrderDto {
+// //   @IsOptional()
+// //   @IsEnum(ChangeOrderSectionType)
+// //   section?: ChangeOrderSectionType;
+
+// //   @IsOptional()
+// //   @IsString()
+// //   value?: string;
+
+// //   @IsOptional()
+// //   @IsBoolean()
+// //   replaceEarlier?: boolean;
+
+// //   @IsOptional()
+// //   @IsBoolean()
+// //   addRevision?: boolean;
+
+// //   @IsOptional()
+// //   @IsString()
+// //   pullFromFiles?: string;
+
+// //   @IsOptional()
+// //   @IsString()
+// //   mpiId?: string;
+// // }
+
+
+
+
 // import {
 //   IsOptional,
 //   IsString,
 //   IsBoolean,
 //   IsEnum,
-//   ValidateNested,
-//   IsArray,
 // } from 'class-validator';
-// import { Type } from 'class-transformer';
-// import { ChangeOrderSectionType } from '@prisma/client';
 
-// export class CreateChangeOrderSectionDto {
-//   @IsEnum(ChangeOrderSectionType)
-//   section: ChangeOrderSectionType;
-
-//   @IsOptional()
-//   @IsString()
-//   value?: string;
-
-//   @IsOptional()
-//   @IsBoolean()
-//   replaceEarlier?: boolean;
-
-//   @IsOptional()
-//   @IsBoolean()
-//   addRevision?: boolean;
-
-//   @IsOptional()
-//   @IsString()
-//   pullFromFiles?: string;
-// }
 
 // export class CreateChangeOrderDto {
-
+ 
+//    @IsOptional()
 //   @IsString()
-//   mpiId: string;
 
-//   @IsArray()
-//   @ValidateNested({ each: true })
-//   @Type(() => CreateChangeOrderSectionDto)
-//   sections: CreateChangeOrderSectionDto[];
-// }
-
-// export class UpdateChangeOrderSectionDto {
-//   @IsOptional()
-//   @IsEnum(ChangeOrderSectionType)
-//   section?: ChangeOrderSectionType;
+//   section: string;
 
 //   @IsOptional()
 //   @IsString()
@@ -61,40 +92,55 @@
 //   @IsOptional()
 //   @IsString()
 //   pullFromFiles?: string;
-// }
-
-// export class UpdateChangeOrderDto {
-//   @IsOptional()
-//   @IsString()
-//   briefDescription?: string;
 
 //   @IsOptional()
 //   @IsString()
 //   mpiId?: string;
+// }
+
+// export class UpdateChangeOrderDto {
+//   @IsOptional()
+//  @IsString()
+//   section?: string;
 
 //   @IsOptional()
-//   @IsArray()
-//   @ValidateNested({ each: true })
-//   @Type(() => UpdateChangeOrderSectionDto)
-//   sections?: UpdateChangeOrderSectionDto[];
+//   @IsString()
+//   value?: string;
+
+//   @IsOptional()
+//   @IsBoolean()
+//   replaceEarlier?: boolean;
+
+//   @IsOptional()
+//   @IsBoolean()
+//   addRevision?: boolean;
+
+//   @IsOptional()
+//   @IsString()
+//   pullFromFiles?: string;
+
+//   @IsOptional()
+//   @IsString()
+//   mpiId?: string;
 // }
 
 
+// change-order.dto.ts
 import {
-  IsOptional,
   IsString,
+  IsOptional,
   IsBoolean,
-  IsEnum,
+  ValidateNested,
 } from 'class-validator';
-import { ChangeOrderSectionType } from '@prisma/client';
+import { Type } from 'class-transformer';
 
-export class CreateChangeOrderDto {
-  @IsEnum(ChangeOrderSectionType)
-  section: ChangeOrderSectionType;
+class ChangeOrderDetailDto {
+  @IsBoolean()
+  isRequired: boolean;
 
   @IsOptional()
   @IsString()
-  value?: string;
+  description?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -107,34 +153,32 @@ export class CreateChangeOrderDto {
   @IsOptional()
   @IsString()
   pullFromFiles?: string;
+}
+
+export class CreateChangeOrderDto {
+  @IsString()
+  changeorder_name: string;
 
   @IsOptional()
   @IsString()
   mpiId?: string;
+
+  @ValidateNested()
+  @Type(() => ChangeOrderDetailDto)
+  detail: ChangeOrderDetailDto;
 }
 
 export class UpdateChangeOrderDto {
   @IsOptional()
-  @IsEnum(ChangeOrderSectionType)
-  section?: ChangeOrderSectionType;
-
-  @IsOptional()
   @IsString()
-  value?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  replaceEarlier?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  addRevision?: boolean;
-
-  @IsOptional()
-  @IsString()
-  pullFromFiles?: string;
+  changeorder_name?: string;
 
   @IsOptional()
   @IsString()
   mpiId?: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ChangeOrderDetailDto)
+  detail?: ChangeOrderDetailDto;
 }

@@ -195,6 +195,7 @@ import {
 } from '../../specification/dto/specification.dto';
 import {
   IsArray,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -234,6 +235,7 @@ class UpdateDocumentationInput {
   @IsOptional()
   @IsString()
   description?: string;
+  id: boolean;
 }
 
 class CreateFlowchartInput {
@@ -254,6 +256,7 @@ class UpdateFlowchartInput {
   @IsOptional()
   @IsString()
   description?: string;
+  id: boolean;
 }
 
 export class CreateStationDto {
@@ -277,6 +280,11 @@ export class CreateStationDto {
   @IsString()
   status?: string;
 
+
+   @IsOptional()
+  @IsInt()
+  priority?: number;
+
   @IsOptional()
   @IsString()
   description?: string;
@@ -288,6 +296,13 @@ export class CreateStationDto {
   @IsOptional()
   @IsString()
   operator?: string;
+
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  Note?: string[];
+
 
   @IsOptional()
   @IsArray()
@@ -343,9 +358,18 @@ export class UpdateStationDto {
   @IsString()
   location?: string;
 
+
+  @IsOptional()
+  @IsInt()
+  priority?: number;
   @IsOptional()
   @IsString()
   operator?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  Note?: string[];
 
   @IsOptional()
   @IsArray()

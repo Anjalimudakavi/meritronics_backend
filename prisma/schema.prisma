@@ -38,11 +38,28 @@ model MPI {
 jobId                       String                  @unique
 assemblyId                  String                  @unique
   customer            String?
+  Instruction           String[] 
   stations                 Station[]
   orderForms   OrderForm[]  
    checklists               Checklist[]
-   changeOrders   ChangeOrder[]   
+   changeOrders   ChangeOrder[]  
+     mpiDocs         MpiDocumentation[]  
+ 
 }
+
+
+model MpiDocumentation { 
+  id          String   @id @default(cuid())
+  fileUrl     String?  // Optional file URL or path
+  description String?  // Optional description
+
+  mpiId       String                      // Foreign key
+  mpi         MPI        @relation(fields: [mpiId], references: [id],  onDelete: Cascade) // Relation
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Station {
   id            String         @id @default(cuid())
   stationId     String         @unique
@@ -56,6 +73,13 @@ model Station {
   description   String?
   location      String?
   operator     String?
+priority Int? @default(0)
+
+
+
+ Note String[] 
+
+  
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   isDeleted     Boolean        @default(false)
@@ -73,6 +97,7 @@ model Documentation {
   station     Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
 }
 
 model Flowchart {
@@ -89,14 +114,14 @@ model Flowchart {
 model Specification {
   id           String   @id @default(cuid())
   name         String
-  slug         String   @unique
+  slug         String   
   inputType         inputType     @default(TEXT)
 suggestions  String[]  
 required     Boolean       @default(false) // Used for CHECKBOX    
   stationId String
   station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
     stationSpecifications StationSpecification[]
-
+  @@unique([slug, stationId])     
 }
 
 
@@ -176,33 +201,26 @@ model ChecklistItem {
   updatedAt    DateTime         @default(now()) @updatedAt
 }
 
-
-enum ChangeOrderSectionType {
-  CUSTOMER_ECO
-  CUSTOMER_DEVIATION
-  BOM_FOR_ASSEMBLY
-  PULL_LIST_FOR_ASSEMBLY
-  DRAWING_FOR_ASSEMBLY
-  SPECIAL_INSTRUCTIONS
-  MPI_FOR_ASSEMBLY
-  AVL_FOR
-  OTHER_ATTACHMENTS
-}
-
 model ChangeOrder {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String              @id @default(cuid())
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
-  section         ChangeOrderSectionType
+  changeorder_name String
+  mpiId            String?
+  mpi              MPI?                @relation(fields: [mpiId], references: [id])
 
-  value           String?
-  replaceEarlier  Boolean  @default(false)
-  addRevision     Boolean  @default(false)
-  pullFromFiles   String?
-  mpiId     String?
-  mpi       MPI?    @relation(fields: [mpiId], references: [id])
-
-
+  detail           ChangeOrderDetail?  @relation("ChangeOrderToDetail")
 }
 
+model ChangeOrderDetail {
+  id             String   @id @default(cuid())
+  isRequired     Boolean
+  description    String?
+  replaceEarlier Boolean  @default(false)
+  addRevision    Boolean  @default(false)
+  pullFromFiles  String?
+
+  changeOrderId  String   @unique
+  changeOrder    ChangeOrder @relation("ChangeOrderToDetail", fields: [changeOrderId], references: [id])
+}

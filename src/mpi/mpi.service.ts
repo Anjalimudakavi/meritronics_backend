@@ -1,128 +1,351 @@
-// import { Injectable } from '@nestjs/common';
-// import { CreateOrUpdateMpiDto } from './dto/mpi.dto';
+
+// import { Prisma } from '@prisma/client';
+
+// import { Injectable, NotFoundException } from '@nestjs/common';
+// import { CreateMpiDto, UpdateMpiDto, CreateChecklistItemDto } from './dto/mpi.dto';
 // import { PrismaService } from 'prisma/prisma.service';
+// import { CHECKLIST_TEMPLATE } from './template/checklist-template';
+
 // @Injectable()
 // export class MpiService {
 //   constructor(private readonly prisma: PrismaService) {}
-// // async create(data: CreateOrUpdateMpiDto) {
+
+//   private readonly includeRelations = {
+//     stations: {
+//       include: {
+//         specifications: {
+//           include: {
+//             stationSpecifications: true,
+//           },
+//         },
+//       },
+//     },
+//     orderForms: true,
+//     checklists: {
+//       include: {
+//         checklistItems: true,
+//       },
+//     },
+//      mpiDocs: true,
+//   };
+
+// async create(data: CreateMpiDto) {
+//   // Step 1: Create MPI record
 //   const createdMpi = await this.prisma.mPI.create({
 //     data: {
 //       jobId: data.jobId,
 //       assemblyId: data.assemblyId,
+
+      
+//       customer: data.customer, 
+
+// Instruction: data.Instruction,
+
 //     },
 //   });
 
-//   // Fetch with related stations and specifications
-//   return this.prisma.mPI.findUnique({
-//     where: { id: createdMpi.id },
-//     include: {
-//       stations: {
-//         include: {
-//           specifications: true,
-//         },
-//       },
+
+// if (data.orderForms) {
+//   await this.prisma.orderForm.create({
+//     data: {
+//       ...data.orderForms,
+//       mpiId: createdMpi.id,
 //     },
 //   });
+// }
+
+
+
+
+  
+// if (data.stations?.length) {
+//   for (const station of data.stations) {
+//     if (!station.id) throw new Error('Station ID missing');
+
+//     // Link station to MPI
+//     await this.prisma.station.update({
+//       where: { id: station.id },
+//       data: { mpiId: createdMpi.id },
+//     });
+
+//     // Handle specification values
+//     if (station.specificationValues?.length) {
+//       for (const spec of station.specificationValues) {
+//         if (!spec.specificationId) throw new Error('Specification ID missing');
+
+//         await this.prisma.stationSpecification.upsert({
+//           where: {
+//             stationId_specificationId: {
+//               stationId: station.id,
+//               specificationId: spec.specificationId,
+//             },
+//           },
+//           update: {
+//             value: spec.value,
+//             unit: spec.unit,
+//           },
+//           create: {
+//             stationId: station.id,
+//             specificationId: spec.specificationId,
+//             value: spec.value,
+//             unit: spec.unit,
+//           },
+//         });
+//       }
+//     }
+//   }
+// }
+
+
+// if (data.checklists?.length) {
+//   for (const userChecklist of data.checklists) {
+//     const createdChecklist = await this.prisma.checklist.create({
+//       data: {
+//         name: userChecklist.name,
+//         mpiId: createdMpi.id,
+//       },
+//     });
+
+//     if (userChecklist.checklistItems?.length) {
+//       const checklistItemsData: Prisma.ChecklistItemCreateManyInput[] = userChecklist.checklistItems
+//         .filter(item => !!item.description)
+//         .map(item => ({
+//           sectionId: createdChecklist.id,
+//           description: item.description!, // safe because we filtered above
+//           required: item.required ?? true,
+//           remarks: item.remarks ?? '',
+//           createdBy: item.createdBy ?? 'user',
+//           isActive: item.isActive ?? true,
+//         }));
+
+//       if (checklistItemsData.length) {
+//         await this.prisma.checklistItem.createMany({ data: checklistItemsData });
+//       }
+//     }
+//   }
+// }
+
+  
+//   // Step 5: Return MPI with all relations
+//   return this.findOne(createdMpi.id);
 // }
 
 
 //   async findAll() {
 //     return this.prisma.mPI.findMany({
-//       include: {
-//         stations: {
-//           include: {
-//             specifications: true,
-//           },
-//         },
-//       },
+//       include: this.includeRelations,
 //     });
 //   }
 
 //   async findOne(id: string) {
-//     return this.prisma.mPI.findUnique({
+//     const mpi = await this.prisma.mPI.findUnique({
 //       where: { id },
-//       include: {
-//         stations: {
-//           include: {
-//             specifications: true,
-//           },
-//         },
-//       },
+//       include: this.includeRelations,
 //     });
+
+//     if (!mpi) {
+//       throw new NotFoundException('MPI not found');
+//     }
+
+//     return mpi;
 //   }
 
-// //nested update
 
 
-// //   async update(id: string, data: CreateOrUpdateMpiDto) {
-// //     // Basic fields update
-// //     const updatedMpi = await this.prisma.mPI.update({
-// //       where: { id },
-// //       data: {
-// //         jobId: data.jobId,
-// //         assemblyId: data.assemblyId,
-// //       },
-// //     });
+// async update(id: string, data: UpdateMpiDto) {
+//   console.log('🔄 Starting MPI update for ID:', id);
+//   console.log('📝 Update data received:', JSON.stringify(data, null, 2));
 
-// //     // Optionally update stations (remove all and recreate)
-// //     if (data.stations && data.stations.length > 0) {
-// //       // Delete existing stations and specs
-// //       await this.prisma.station.deleteMany({ where: { mpiId: id } });
-
-// //       // Recreate stations with nested specifications
-// //       await this.prisma.mPI.update({
-// //         where: { id },
-// //         data: {
-// //           stations: {
-// //             create: data.stations.map((station) => ({
-// //               stationId: station.stationId,
-// //               stationName: station.stationName,
-// //               specifications: station.specifications
-// //                 ? {
-// //                     create: station.specifications.map((spec) => ({
-// //                       name: spec.name,
-// //                       slug: spec.slug,
-// //                       inputType: spec.inputType || 'TEXT',
-// //                     })),
-// //                   }
-// //                 : undefined,
-// //             })),
-// //           },
-// //         },
-// //       });
-// //     }
-
-// //     // Return updated with nested includes
-// //     return this.findOne(id);
-// //   }
-
-// async update(id: string, data: CreateOrUpdateMpiDto) {
-//   await this.prisma.mPI.update({
+//   // Step 1: Update MPI base fields
+//   const updatedMpi = await this.prisma.mPI.update({
 //     where: { id },
 //     data: {
 //       jobId: data.jobId,
 //       assemblyId: data.assemblyId,
+//       customer: data.customer,
+// Instruction: data.Instruction,
 //     },
 //   });
 
-//   // Fetch updated MPI with related stations/specifications
+//   // Step 2: Update Order Form
+//   if (data.orderForms) {
+//     console.log('📋 Updating order forms...');
+//     const existingOrderForm = await this.prisma.orderForm.findFirst({
+//       where: { mpiId: id },
+//     });
+
+//     if (existingOrderForm?.id) {
+//       await this.prisma.orderForm.update({
+//         where: { id: existingOrderForm.id },
+//         data: {
+//           ...data.orderForms,
+//         },
+//       });
+//     }
+//   }
+
+//   // Step 3: Update Stations - ONLY specifications, not station metadata
+//   if (data.stations?.length) {
+//     console.log('🏭 Processing stations:', data.stations.length);
+    
+//     for (const station of data.stations) {
+//       if (!station.id) throw new Error('Station ID is required');
+
+//       console.log(`📊 Processing station ${station.id} with ${station.specificationValues?.length || 0} specifications`);
+
+//       // ONLY update specifications, don't touch station metadata
+//       if (station.specificationValues?.length) {
+//         for (const spec of station.specificationValues) {
+//           if (!spec.specificationId) {
+//             throw new Error(`Missing specificationId for station: ${station.id}`);
+//           }
+
+//           console.log(`  ✏️ Upserting spec ${spec.specificationId} with value: ${spec.value}`);
+
+//           await this.prisma.stationSpecification.upsert({
+//             where: {
+//               stationId_specificationId: {
+//                 stationId: station.id,
+//                 specificationId: spec.specificationId,
+//               },
+//             },
+//             update: {
+//               value: spec.value,
+//               unit: spec.unit,
+//             },
+//             create: {
+//               stationId: station.id,
+//               specificationId: spec.specificationId,
+//               value: spec.value,
+//               unit: spec.unit,
+//             },
+//           });
+//         }
+//       }
+//     }
+//   }
+
+//   // Step 4: Handle Checklists - Support both existing updates AND new creations
+//   if (data.checklists?.length) {
+//     console.log('📋 Processing checklists:', data.checklists.length);
+    
+//     for (const checklist of data.checklists) {
+//       console.log(`📝 Processing checklist: ${checklist.name} (ID: ${checklist.id || 'NEW'})`);
+
+//       if (!checklist.id) {
+//         // CREATE NEW CHECKLIST
+//         console.log('  ➕ Creating new checklist...');
+        
+//         const createdChecklist = await this.prisma.checklist.create({
+//           data: {
+//             name: checklist.name || 'Untitled Checklist',
+//             mpiId: id,
+//           },
+//         });
+
+//         console.log(`  ✅ Created checklist with ID: ${createdChecklist.id}`);
+
+//         // Create checklist items for new checklist
+//         if (checklist.checklistItems?.length) {
+//           console.log(`  📋 Creating ${checklist.checklistItems.length} checklist items...`);
+          
+//           const checklistItemsData = checklist.checklistItems
+//             .filter(item => !!item.description)
+//             .map(item => ({
+//               sectionId: createdChecklist.id,
+//               description: item.description!,
+//               required: item.required ?? true,
+//               remarks: item.remarks ?? '',
+           
+//               createdBy: item.createdBy ?? 'user',
+//               isActive: item.isActive ?? true,
+//             }));
+
+//           if (checklistItemsData.length) {
+//             await this.prisma.checklistItem.createMany({ 
+//               data: checklistItemsData 
+//             });
+//             console.log(`  ✅ Created ${checklistItemsData.length} checklist items`);
+//           }
+//         }
+//       } else {
+//         // UPDATE EXISTING CHECKLIST
+//         console.log('  ✏️ Updating existing checklist...');
+        
+//         await this.prisma.checklist.update({
+//           where: { id: checklist.id },
+//           data: {
+//             name: checklist.name,
+//           },
+//         });
+
+//         // Handle checklist items for existing checklist
+//         if (checklist.checklistItems?.length) {
+//           console.log(`  📋 Processing ${checklist.checklistItems.length} checklist items...`);
+          
+//           for (const item of checklist.checklistItems) {
+//             if (item.id) {
+//               // Update existing item
+//               console.log(`    ✏️ Updating item ${item.id}: ${item.description}`);
+              
+//               await this.prisma.checklistItem.update({
+//                 where: { id: item.id },
+//                 data: {
+//                   description: item.description,
+//                   category: item.category,
+//                   required: item.required ?? true,
+//                   remarks: item.remarks ?? '',
+//                   createdBy: item.createdBy ?? 'system',
+//                   isActive: item.isActive ?? true,
+//                 },
+//               });
+//             } else {
+//               // Create new item for existing checklist
+//               console.log(`    ➕ Creating new item: ${item.description}`);
+              
+//               await this.prisma.checklistItem.create({
+//                 data: {
+//                   sectionId: checklist.id,
+//                   description: item.description!,
+//                   required: item.required ?? true,
+//                   remarks: item.remarks ?? '',
+//                   createdBy: item.createdBy ?? 'user',
+//                   isActive: item.isActive ?? true,
+//                 },
+//               });
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+
+//   console.log('✅ MPI update completed, fetching updated data...');
+
+//   // Final: return full updated MPI with nested includes
 //   return this.prisma.mPI.findUnique({
 //     where: { id },
 //     include: {
+//       orderForms: true,
 //       stations: {
 //         include: {
-//           specifications: true,
+//           stationSpecifications: true,
+//         },
+//       },
+//       checklists: {
+//         include: {
+//           checklistItems: true,
 //         },
 //       },
 //     },
 //   });
 // }
-
 
 //   async remove(id: string) {
 //     return this.prisma.mPI.delete({ where: { id } });
 //   }
 // }
+
 
 
 
@@ -145,6 +368,8 @@ export class MpiService {
             stationSpecifications: true,
           },
         },
+           documentations: true,
+
       },
     },
     orderForms: true,
@@ -153,6 +378,7 @@ export class MpiService {
         checklistItems: true,
       },
     },
+     mpiDocs: true,
   };
 
 async create(data: CreateMpiDto) {
@@ -164,6 +390,9 @@ async create(data: CreateMpiDto) {
 
       
       customer: data.customer, 
+
+Instruction: data.Instruction,
+
     },
   });
 
@@ -178,6 +407,17 @@ if (data.orderForms) {
 }
 
 
+if (data.mpiDocs?.length) {
+  for (const doc of data.mpiDocs) {
+    await this.prisma.mpiDocumentation.create({
+      data: {
+        fileUrl: doc.fileUrl,
+        description: doc.description,
+        mpiId: createdMpi.id,
+      },
+    });
+  }
+}
 
 
   
@@ -190,7 +430,17 @@ if (data.stations?.length) {
       where: { id: station.id },
       data: { mpiId: createdMpi.id },
     });
-
+ if (station.documentations?.length) {
+      for (const doc of station.documentations) {
+        await this.prisma.documentation.create({
+          data: {
+            stationId: station.id,
+            fileUrl: doc.fileUrl,
+            description: doc.description,
+          },
+        });
+      }
+    }
     // Handle specification values
     if (station.specificationValues?.length) {
       for (const spec of station.specificationValues) {
@@ -219,88 +469,34 @@ if (data.stations?.length) {
   }
 }
 
-  // Step 4: Create Checklists with preloaded template (sections + descriptions)
-  // and user-defined required, remarks, etc.
-  if (data.checklists?.length) {
-  //   for (const section of CHECKLIST_TEMPLATE) {
-  //     const userChecklist = data.checklists.find(c => c.name === section.name);
-  //     if (!userChecklist) continue;
 
-  //     const createdChecklist = await this.prisma.checklist.create({
-  //       data: {
-  //         name: section.name,
-  //         mpiId: createdMpi.id,
-  //       },
-  //     });
-
-  //     // Fix: Explicit type to avoid TS error
-  //     const checklistItemsData: Prisma.ChecklistItemCreateManyInput[] = [];
-
-  //     for (const templateItem of section.checklistItems) {
-  //       const userItem = userChecklist.checklistItems?.find(
-  //         i => i.description === templateItem.description
-  //       );
-
-  //       checklistItemsData.push({
-  //         sectionId: createdChecklist.id,
-  //         description: templateItem.description,
-  //         required: userItem?.required ?? true,
-  //         remarks: userItem?.remarks ?? '',
-  //         createdBy: userItem?.createdBy ?? 'user',
-  //         isActive: userItem?.isActive ?? true,
-  //       });
-  //     }
-
-  //     if (checklistItemsData.length) {
-  //       await this.prisma.checklistItem.createMany({
-  //         data: checklistItemsData,
-  //       });
-  //     }
-  //   }
-
-  // Step 4: Create Checklists with preloaded template (sections + descriptions)
-// and user-defined required, remarks, isActive, createdBy
-for (const section of CHECKLIST_TEMPLATE) {
-  // Find matching user-provided checklist section by name
-  const userChecklist = data.checklists?.find(c => c.name === section.name);
-
-  // Create checklist section
-  const createdChecklist = await this.prisma.checklist.create({
-    data: {
-      name: section.name,
-      mpiId: createdMpi.id,
-    },
-  });
-
-  // Prepare checklist items
-  const checklistItemsData: Prisma.ChecklistItemCreateManyInput[] = section.checklistItems.map(
-    templateItem => {
-      // Try to get dynamic fields from user data (matched by description)
-      const userItem = userChecklist?.checklistItems?.find(
-        i => i.description === templateItem.description
-      );
-
-      return {
-        sectionId: createdChecklist.id,
-        description: templateItem.description, // always from template
-        required: userItem?.required ?? true,
-        remarks: userItem?.remarks ?? '',
-        createdBy: userItem?.createdBy ?? 'system',
-        isActive: userItem?.isActive ?? true,
-      };
-    }
-  );
-
-  // Insert all checklist items
-  if (checklistItemsData.length) {
-    await this.prisma.checklistItem.createMany({
-      data: checklistItemsData,
+if (data.checklists?.length) {
+  for (const userChecklist of data.checklists) {
+    const createdChecklist = await this.prisma.checklist.create({
+      data: {
+        name: userChecklist.name,
+        mpiId: createdMpi.id,
+      },
     });
+
+    if (userChecklist.checklistItems?.length) {
+      const checklistItemsData: Prisma.ChecklistItemCreateManyInput[] = userChecklist.checklistItems
+        .filter(item => !!item.description)
+        .map(item => ({
+          sectionId: createdChecklist.id,
+          description: item.description!, // safe because we filtered above
+          required: item.required ?? true,
+          remarks: item.remarks ?? '',
+          createdBy: item.createdBy ?? 'user',
+          isActive: item.isActive ?? true,
+        }));
+
+      if (checklistItemsData.length) {
+        await this.prisma.checklistItem.createMany({ data: checklistItemsData });
+      }
+    }
   }
 }
-
-  }
-
 
   
   // Step 5: Return MPI with all relations
@@ -327,169 +523,266 @@ for (const section of CHECKLIST_TEMPLATE) {
     return mpi;
   }
 
-  // async update(id: string, data: UpdateMpiDto) {
-  //   await this.prisma.mPI.update({
-  //     where: { id },
-  //     data: {
-  //       jobId: data.jobId,
-  //       assemblyId: data.assemblyId,
-  //     },
-  //   });
 
-  //   if (data.stations?.length) {
-  //     for (const station of data.stations) {
-  //       await this.prisma.station.update({
-  //         where: { id: station.id },
-  //         data: { mpiId: id },
-  //       });
-  //     }
-  //   }
-
-  //   return this.findOne(id);
-  // }
 
 async update(id: string, data: UpdateMpiDto) {
-  // Step 1: Update MPI basic fields
+  console.log('🔄 Starting MPI update for ID:', id);
+  console.log('📝 Update data received:', JSON.stringify(data, null, 2));
+
+  // Step 1: Update MPI base fields
   const updatedMpi = await this.prisma.mPI.update({
     where: { id },
     data: {
       jobId: data.jobId,
       assemblyId: data.assemblyId,
+      customer: data.customer,
+Instruction: data.Instruction,
     },
   });
 
-  // Step 2: Update existing Order Form only
-  if (data.orderForm) {
+  // Step 2: Update Order Form
+  if (data.orderForms) {
+    console.log('📋 Updating order forms...');
     const existingOrderForm = await this.prisma.orderForm.findFirst({
       where: { mpiId: id },
     });
 
-    if (existingOrderForm) {
+    if (existingOrderForm?.id) {
       await this.prisma.orderForm.update({
         where: { id: existingOrderForm.id },
-        data: data.orderForm,
+        data: {
+          ...data.orderForms,
+        },
       });
     }
-    // No create logic here
   }
 
-  // Step 3: Update existing Stations and their existing Specification Values
+  // Step 3: Update Stations - ONLY specifications, not station metadata
   if (data.stations?.length) {
+    console.log('🏭 Processing stations:', data.stations.length);
+    
     for (const station of data.stations) {
       if (!station.id) throw new Error('Station ID is required');
 
-      await this.prisma.station.update({
-        where: { id: station.id },
+      console.log(`📊 Processing station ${station.id} with ${station.specificationValues?.length || 0} specifications`);
+// ✅ Add or update station documentations
+// if (station.documentations?.length) {
+//   console.log(`📂 Processing ${station.documentations.length} documentations for station ${station.id}...`);
+  
+//   for (const doc of station.documentations) {
+//     if (doc.id) {
+//       // ✅ Update existing station documentation
+//       console.log(`  ✏️ Updating station doc ${doc.id}`);
+//       await this.prisma.documentation.update({
+//         where: { id: doc.id },
+//         data: {
+//           fileUrl: doc.fileUrl,
+//           description: doc.description,
+//         },
+//       });
+//     } else {
+//       // ➕ Create new documentation
+//       console.log(`  ➕ Creating new documentation for station ${station.id}`);
+//       await this.prisma.documentation.create({
+//         data: {
+//           stationId: station.id,
+//           fileUrl: doc.fileUrl,
+//           description: doc.description,
+//         },
+//       });
+//     }
+//   }
+// }
+
+
+
+if (station.documentations?.length) {
+  for (const doc of station.documentations) {
+    if (typeof doc.id === 'string') {
+      await this.prisma.documentation.update({
+        where: { id: doc.id },
         data: {
-          stationName: station.stationName,
-          description: station.description,
-          location: station.location,
-          status: station.status,
-          operator: station.operator,
-          mpiId: id,
+          fileUrl: doc.fileUrl,
+          description: doc.description,
         },
       });
+    } else {
+      await this.prisma.documentation.create({
+        data: {
+          stationId: station.id,
+          fileUrl: doc.fileUrl,
+          description: doc.description,
+        },
+      });
+    }
+  }
+}
 
+      // ONLY update specifications, don't touch station metadata
       if (station.specificationValues?.length) {
         for (const spec of station.specificationValues) {
-          if (!spec.specificationId) throw new Error('Specification ID is required');
+          if (!spec.specificationId) {
+            throw new Error(`Missing specificationId for station: ${station.id}`);
+          }
 
-          const existingSpec = await this.prisma.stationSpecification.findUnique({
+          console.log(`  ✏️ Upserting spec ${spec.specificationId} with value: ${spec.value}`);
+
+          await this.prisma.stationSpecification.upsert({
             where: {
               stationId_specificationId: {
                 stationId: station.id,
                 specificationId: spec.specificationId,
               },
             },
+            update: {
+              value: spec.value,
+              unit: spec.unit,
+            },
+            create: {
+              stationId: station.id,
+              specificationId: spec.specificationId,
+              value: spec.value,
+              unit: spec.unit,
+            },
           });
+        }
+      }
+    }
+  }
 
-          if (existingSpec) {
-            await this.prisma.stationSpecification.update({
-              where: {
-                stationId_specificationId: {
-                  stationId: station.id,
-                  specificationId: spec.specificationId,
-                },
-              },
-              data: {
-                value: spec.value,
-                unit: spec.unit,
-              },
+if (data.mpiDocs?.length) {
+  console.log(`📁 Processing ${data.mpiDocs.length} documentation files...`);
+
+  for (const doc of data.mpiDocs) {
+    if (doc.id) {
+      // ✅ Update existing document
+      console.log(`  ✏️ Updating document ${doc.id}`);
+      await this.prisma.mpiDocumentation.update({
+        where: { id: doc.id },
+        data: {
+          fileUrl: doc.fileUrl,
+          description: doc.description,
+        },
+      });
+    } else {
+      // ➕ Create new document
+      console.log(`  ➕ Creating new documentation entry`);
+      await this.prisma.mpiDocumentation.create({
+        data: {
+          mpiId: id,
+          fileUrl: doc.fileUrl,
+          description: doc.description,
+        },
+      });
+    }
+  }
+}
+
+  
+  // Step 4: Handle Checklists - Support both existing updates AND new creations
+  if (data.checklists?.length) {
+    console.log('📋 Processing checklists:', data.checklists.length);
+    
+    for (const checklist of data.checklists) {
+      console.log(`📝 Processing checklist: ${checklist.name} (ID: ${checklist.id || 'NEW'})`);
+
+      if (!checklist.id) {
+        // CREATE NEW CHECKLIST
+        console.log('  ➕ Creating new checklist...');
+        
+        const createdChecklist = await this.prisma.checklist.create({
+          data: {
+            name: checklist.name || 'Untitled Checklist',
+            mpiId: id,
+          },
+        });
+
+        console.log(`  ✅ Created checklist with ID: ${createdChecklist.id}`);
+
+        // Create checklist items for new checklist
+        if (checklist.checklistItems?.length) {
+          console.log(`  📋 Creating ${checklist.checklistItems.length} checklist items...`);
+          
+          const checklistItemsData = checklist.checklistItems
+            .filter(item => !!item.description)
+            .map(item => ({
+              sectionId: createdChecklist.id,
+              description: item.description!,
+              required: item.required ?? true,
+              remarks: item.remarks ?? '',
+           
+              createdBy: item.createdBy ?? 'user',
+              isActive: item.isActive ?? true,
+            }));
+
+          if (checklistItemsData.length) {
+            await this.prisma.checklistItem.createMany({ 
+              data: checklistItemsData 
             });
+            console.log(`  ✅ Created ${checklistItemsData.length} checklist items`);
+          }
+        }
+      } else {
+        // UPDATE EXISTING CHECKLIST
+        console.log('  ✏️ Updating existing checklist...');
+        
+        await this.prisma.checklist.update({
+          where: { id: checklist.id },
+          data: {
+            name: checklist.name,
+          },
+        });
+
+        // Handle checklist items for existing checklist
+        if (checklist.checklistItems?.length) {
+          console.log(`  📋 Processing ${checklist.checklistItems.length} checklist items...`);
+          
+          for (const item of checklist.checklistItems) {
+            if (item.id) {
+              // Update existing item
+              console.log(`    ✏️ Updating item ${item.id}: ${item.description}`);
+              
+              await this.prisma.checklistItem.update({
+                where: { id: item.id },
+                data: {
+                  description: item.description,
+                  category: item.category,
+                  required: item.required ?? true,
+                  remarks: item.remarks ?? '',
+                  createdBy: item.createdBy ?? 'system',
+                  isActive: item.isActive ?? true,
+                },
+              });
+            } else {
+              // Create new item for existing checklist
+              console.log(`    ➕ Creating new item: ${item.description}`);
+              
+              await this.prisma.checklistItem.create({
+                data: {
+                  sectionId: checklist.id,
+                  description: item.description!,
+                  required: item.required ?? true,
+                  remarks: item.remarks ?? '',
+                  createdBy: item.createdBy ?? 'user',
+                  isActive: item.isActive ?? true,
+                },
+              });
+            }
           }
         }
       }
     }
   }
 
-  // Step 4: Update existing Checklist Items only
-  if (data.checklists?.length) {
-    // Step 4: Upsert Checklists using template and user overrides
-for (const section of CHECKLIST_TEMPLATE) {
-  // Find user-supplied checklist section, if any
-  const userChecklist = data.checklists?.find(c => c.name === section.name);
+  console.log('✅ MPI update completed, fetching updated data...');
 
-  // Check if this section already exists for this MPI
-  const existingChecklist = await this.prisma.checklist.findFirst({
-    where: {
-      name: section.name,
-      mpiId: id,
-    },
-  });
+  // Final: return full updated MPI with nested includes
+ return this.prisma.mPI.findUnique({
+  where: { id },
+  include: this.includeRelations,
+});
 
-  let checklistId: string;
-
-  if (existingChecklist) {
-    checklistId = existingChecklist.id;
-  } else {
-    const createdChecklist = await this.prisma.checklist.create({
-      data: {
-        name: section.name,
-        mpiId: id,
-      },
-    });
-    checklistId = createdChecklist.id;
-  }
-
-  for (const templateItem of section.checklistItems) {
-    const userItem = userChecklist?.checklistItems?.find(
-      i => i.description === templateItem.description
-    );
-
-    const existingItem = await this.prisma.checklistItem.findFirst({
-      where: {
-        sectionId: checklistId,
-        description: templateItem.description,
-      },
-    });
-
-    const itemData = {
-      description: templateItem.description,
-      required: userItem?.required ?? true,
-      remarks: userItem?.remarks ?? '',
-      createdBy: userItem?.createdBy ?? 'system',
-      isActive: userItem?.isActive ?? true,
-      sectionId: checklistId,
-    };
-
-    if (existingItem) {
-      await this.prisma.checklistItem.update({
-        where: { id: existingItem.id },
-        data: itemData,
-      });
-    } else {
-      await this.prisma.checklistItem.create({
-        data: itemData,
-      });
-    }
-  }
 }
-
-  }
-
-  return updatedMpi;
-}
-
 
   async remove(id: string) {
     return this.prisma.mPI.delete({ where: { id } });
