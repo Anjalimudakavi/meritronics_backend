@@ -1,0 +1,85 @@
+{
+    "statusCode": 200,
+    "status": "success",
+    "timestamp": "2025-07-31T11:24:05.541Z",
+    "version": {
+        "appVersion": "1.0.0",
+        "apiVersion": "v1"
+    },
+    "data": {
+        "id": "cmdhfepyw00037280l575tykv",
+        "name": "Length1",
+        "slug": "length1",
+        "type": "TEXT",
+        "isRequired": true,
+        "isActive": true,
+        "serviceId": null,
+        "suggestions": [],
+        "createdAt": "2025-07-24T13:26:26.553Z",
+        "updatedAt": "2025-07-31T11:24:05.531Z",
+        "isDeleted": false,
+        "defaultUnit": "MM",
+        "allowedUnits": [
+            "MM",
+            "CM"
+        ],
+        "priority": 1,
+        "allowCustom": true,
+        "hasDimension": false,
+        "specificationGroupId": null,
+        "hasSubSpecification": true,
+        "parentId": null,
+        "subSpecifications": [
+            {
+                "id": "cmdhfepzb000572807hxabo9v",
+                "name": "Min Length1",
+                "slug": "Min-Length1",
+                "type": "TEXT",
+                "isRequired": true,
+                "isActive": true,
+                "serviceId": null,
+                "suggestions": [],
+                "createdAt": "2025-07-24T13:26:26.566Z",
+                "updatedAt": "2025-07-24T13:26:26.566Z",
+                "isDeleted": false,
+                "defaultUnit": "MM",
+                "allowedUnits": [
+                    "MM",
+                    "CM"
+                ],
+                "priority": 0,
+                "allowCustom": true,
+                "hasDimension": false,
+                "specificationGroupId": null,
+                "hasSubSpecification": false,
+                "parentId": "cmdhfepyw00037280l575tykv"
+            },
+            {
+                "id": "cmdhfepzl00077280723936c3",
+                "name": "Max Length",
+                "slug": "Max-Length",
+                "type": "TEXT",
+                "isRequired": false,
+                "isActive": true,
+                "serviceId": null,
+                "suggestions": [],
+                "createdAt": "2025-07-24T13:26:26.577Z",
+                "updatedAt": "2025-07-24T13:26:26.577Z",
+                "isDeleted": false,
+                "defaultUnit": "MM",
+                "allowedUnits": [
+                    "MM",
+                    "CM"
+                ],
+                "priority": 0,
+                "allowCustom": true,
+                "hasDimension": false,
+                "specificationGroupId": null,
+                "hasSubSpecification": false,
+                "parentId": "cmdhfepyw00037280l575tykv"
+            }
+        ],
+        "serviceName": null
+    },
+    "error": null
+}

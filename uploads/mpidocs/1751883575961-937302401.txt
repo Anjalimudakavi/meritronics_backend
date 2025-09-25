@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload and Search BOM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .sidebar h2 {
+            color: #ffc107;
+            margin-bottom: 20px;
+        }
+
+        .sidebar form {
+            margin-bottom: 30px;
+        }
+
+        .sidebar form button,
+        .sidebar button {
+            width: 100%;
+            padding: 10px;
+            background-color: #ffc107;
+            border: none;
+            border-radius: 5px;
+            color: black;
+            cursor: pointer;
+        }
+
+        .sidebar input[type="file"],
+        .sidebar input[type="text"] {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .sidebar button:hover {
+            background-color: #e0a800;
+        }
+
+        .logout-form button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .logout-form button:hover {
+            background-color: #c82333;
+        }
+
+        /* Main Content */
+        .main {
+            flex-grow: 1;
+            padding: 30px;
+            background-color: white;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .messages {
+            list-style: none;
+            padding: 0;
+        }
+
+        .messages li {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            color: white;
+        }
+
+        .messages .error {
+            background-color: #dc3545;
+        }
+
+        .messages .success {
+            background-color: #28a745;
+        }
+
+        .messages .warning {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        {% if user.is_authenticated %}
+            <h2>Hello, {{ user.username }}</h2>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.file }}
+                <button type="submit" name="file_upload">Upload File</button>
+            </form>
+
+            <form method="post">
+                {% csrf_token %}
+                {{ order_search_form.order_id }}
+                <button type="submit" name="order_search">Search Order</button>
+            </form>
+
+            <form method="post" action="{% url 'logout' %}" class="logout-form">
+                {% csrf_token %}
+                <button type="submit">Logout</button>
+            </form>
+        {% else %}
+            <p>You are not logged in.</p>
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if search_results %}
+            <h2>BOM Data for Order ID: {{ order_search_form.cleaned_data.order_id }}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Qty</th>
+                        <th>Reference Designator</th>
+                        <th>Manufacturer</th>
+                        <th>Manufacturer Part Number</th>
+                        <th>Supplier</th>
+                        <th>Supplier Part Number</th>
+                        <th>Package</th>
+                        <th>Quantity Required</th>
+                        <th>Quantity Purchased</th>
+                        <th>Unit Price</th>
+                        <th>Ext Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in search_results %}
+                    <tr>
+                        <td>{{ row.order_id }}</td>
+                        <td>{{ row.qty }}</td>
+                        <td>{{ row.reference_designator }}</td>
+                        <td>{{ row.manufacturer }}</td>
+                        <td>{{ row.component }}</td>
+                        <td>{{ row.supplier }}</td>
+                        <td>{{ row.supplier_component }}</td>
+                        <td>{{ row.package }}</td>
+                        <td>{{ row.quantity_required }}</td>
+                        <td>{{ row.quantity_purchased }}</td>
+                        <td>{{ row.unit_price }}</td>
+                        <td>{{ row.ext_price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif search_results is not none %}
+            <p>No results found for that Order ID.</p>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>   ................................................................
+def upload_file(request):
+    search_results = None
+    processed_data = None
+    order_id = None
+    form = UploadFileForm()
+    order_search_form = OrderSearchForm()
+
+    if request.method == 'POST':
+        if 'file_upload' in request.POST:
+            form = UploadFileForm(request.POST, request.FILES)
+
+            if not request.FILES.get('file'):
+                messages.error(request, "No file selected. Please upload a file.")
+                return redirect('uploadf')
+
+            if form.is_valid():
+                uploaded_file = form.cleaned_data['file']
+                ext = os.path.splitext(uploaded_file.name)[1].lower()
+
+                if ext not in ['.xls', '.xlsx', '.csv']:
+                    messages.error(request, "Invalid file type. Please upload an Excel or CSV file.")
+                    return redirect('uploadf')
+
+                try:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+                        for chunk in uploaded_file.chunks():
+                            tmp.write(chunk)
+                        tmp_path = tmp.name
+
+                    try:
+                        # Process the Excel file and save data
+                        processed_data = parse_excel_file(tmp_path, request, original_filename=uploaded_file.name)
+                        order_id = processed_data.get('order_id')
+                        save_parsed_data(processed_data, tmp_path)
+
+                        if os.path.exists(tmp_path):
+                            os.remove(tmp_path)
+
+                        # Success message
+                        messages.success(request, f"File processed successfully. Order ID: {order_id}")
+      
+
+                    except Exception as e:
+                        if os.path.exists(tmp_path):
+                            os.remove(tmp_path)
+                        messages.error(request, f"Failed to process file: {str(e)}")
+                        return redirect('uploadf')
+
+                except Exception as temp_file_error:
+                    messages.error(request, f"Error saving the uploaded file: {str(temp_file_error)}")
+                    return redirect('uploadf')
+
+        elif 'order_search' in request.POST:
+            order_search_form = OrderSearchForm(request.POST)
+            if order_search_form.is_valid():
+                order_id = order_search_form.cleaned_data['order_id']
+                # Fetch BOM data based on the order ID
+                search_results = BomDataRaw.objects.filter(order_id=order_id)
+                if not search_results.exists():
+                    messages.warning(request, "No BOM data found for the given Order ID.")
+                else:
+                    # Serializing and returning the data
+                    serializer = BomDataRawSerializer(search_results, many=True)
+                    processed_data = serializer.data
+
+    return render(request, 'uploadf.html', {
+        'form': form,
+        'order_search_form': order_search_form,
+        'processed_data': processed_data,
+       
+        'search_results': search_results,
+    })  ................in this i want to make some changes......instead of search order i want to have button for order details..if i click that button it should display 

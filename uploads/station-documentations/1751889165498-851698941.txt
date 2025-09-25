@@ -1,0 +1,793 @@
+
+
+// import { Prisma } from '@prisma/client';
+
+// import { Injectable, NotFoundException } from '@nestjs/common';
+// import { CreateMpiDto, UpdateMpiDto, CreateChecklistItemDto } from './dto/mpi.dto';
+// import { PrismaService } from 'prisma/prisma.service';
+// import { CHECKLIST_TEMPLATE } from './template/checklist-template';
+
+// @Injectable()
+// export class MpiService {
+//   constructor(private readonly prisma: PrismaService) {}
+
+//   private readonly includeRelations = {
+//     stations: {
+//       include: {
+//         specifications: {
+//           include: {
+//             stationSpecifications: true,
+//           },
+//         },
+//            documentations: true,
+
+//       },
+//     },
+//     orderForms: true,
+//     checklists: {
+//       include: {
+//         checklistItems: true,
+//       },
+//     },
+//      mpiDocs: true,
+//      stationMpiDocuments: true, // ✅ ADD THIS LINE
+//   };
+
+// async create(data: CreateMpiDto) {
+//   // Step 1: Create MPI record
+//   const createdMpi = await this.prisma.mPI.create({
+//     data: {
+//       jobId: data.jobId,
+//       assemblyId: data.assemblyId,
+
+      
+//       customer: data.customer, 
+
+// Instruction: data.Instruction,
+
+//     },
+//   });
+
+// // Step X: Create StationMpiDocuments
+// if (data.stationMpiDocuments?.length) {
+//   console.log('📄 Creating StationMpiDocuments...');
+
+//   for (const doc of data.stationMpiDocuments) {
+//     if (!doc.stationId) {
+//       throw new Error('Station ID is required for StationMpiDocument');
+//     }
+// if (!doc.fileUrl) {
+//   throw new Error('fileUrl is required for StationMpiDocument');
+// }
+//     await this.prisma.stationMpiDocument.create({
+//       data: {
+//         fileUrl: doc.fileUrl,
+//         description: doc.description,
+//         stationId: doc.stationId,
+//         mpiId: createdMpi.id,
+//       },
+//     });
+//   }
+// }
+
+
+
+// if (data.orderForms) {
+//   await this.prisma.orderForm.create({
+//     data: {
+//       ...data.orderForms,
+//       mpiId: createdMpi.id,
+//     },
+//   });
+// }
+
+
+// if (data.mpiDocs?.length) {
+//   for (const doc of data.mpiDocs) {
+//     await this.prisma.mpiDocumentation.create({
+//       data: {
+//         fileUrl: doc.fileUrl,
+//         description: doc.description,
+//         mpiId: createdMpi.id,
+//       },
+//     });
+//   }
+// }
+
+
+  
+// if (data.stations?.length) {
+//   for (const station of data.stations) {
+//     if (!station.id) throw new Error('Station ID missing');
+
+//     // Link station to MPI
+//     await this.prisma.station.update({
+//       where: { id: station.id },
+//       data: { mpiId: createdMpi.id },
+//     });
+
+//     // Handle specification values
+//     if (station.specificationValues?.length) {
+//       for (const spec of station.specificationValues) {
+//         if (!spec.specificationId) throw new Error('Specification ID missing');
+
+//         await this.prisma.stationSpecification.upsert({
+//           where: {
+//             stationId_specificationId: {
+//               stationId: station.id,
+//               specificationId: spec.specificationId,
+//             },
+//           },
+//           update: {
+//             value: spec.value,
+//             unit: spec.unit,
+//           },
+//           create: {
+//             stationId: station.id,
+//             specificationId: spec.specificationId,
+//             value: spec.value,
+//             unit: spec.unit,
+//           },
+//         });
+//       }
+//     }
+//   }
+// }
+
+
+// if (data.checklists?.length) {
+//   for (const userChecklist of data.checklists) {
+//     const createdChecklist = await this.prisma.checklist.create({
+//       data: {
+//         name: userChecklist.name,
+//         mpiId: createdMpi.id,
+//       },
+//     });
+
+//     if (userChecklist.checklistItems?.length) {
+//       const checklistItemsData: Prisma.ChecklistItemCreateManyInput[] = userChecklist.checklistItems
+//         .filter(item => !!item.description)
+//         .map(item => ({
+//           sectionId: createdChecklist.id,
+//           description: item.description!, // safe because we filtered above
+//           required: item.required ?? true,
+//           remarks: item.remarks ?? '',
+//           createdBy: item.createdBy ?? 'user',
+//           isActive: item.isActive ?? true,
+//         }));
+
+//       if (checklistItemsData.length) {
+//         await this.prisma.checklistItem.createMany({ data: checklistItemsData });
+//       }
+//     }
+//   }
+// }
+
+  
+//   // Step 5: Return MPI with all relations
+//   return this.findOne(createdMpi.id);
+// }
+
+
+//   async findAll() {
+//     return this.prisma.mPI.findMany({
+//       include: this.includeRelations,
+//     });
+//   }
+
+//   async findOne(id: string) {
+//     const mpi = await this.prisma.mPI.findUnique({
+//       where: { id },
+//       include: this.includeRelations,
+//     });
+
+//     if (!mpi) {
+//       throw new NotFoundException('MPI not found');
+//     }
+
+//     return mpi;
+//   }
+
+
+
+// async update(id: string, data: UpdateMpiDto) {
+//   console.log('🔄 Starting MPI update for ID:', id);
+//   console.log('📝 Update data received:', JSON.stringify(data, null, 2));
+
+//   // Step 1: Update MPI base fields
+//   const updatedMpi = await this.prisma.mPI.update({
+//     where: { id },
+//     data: {
+//       jobId: data.jobId,
+//       assemblyId: data.assemblyId,
+//       customer: data.customer,
+//       Instruction: data.Instruction,
+//     },
+//   });
+
+
+
+//   // Step 5: Add StationMpiDocuments
+// if (data.stationMpiDocuments?.length) {
+//   console.log('📄 Updating StationMpiDocuments...');
+  
+//   for (const doc of data.stationMpiDocuments) {
+//     if (!doc.stationId) {
+//       throw new Error('Station ID is required for StationMpiDocument');
+//     }
+// if (!doc.fileUrl) {
+//   throw new Error('fileUrl is required for StationMpiDocument');
+// }
+//     await this.prisma.stationMpiDocument.create({
+//       data: {
+//         fileUrl: doc.fileUrl,
+//         description: doc.description,
+//         stationId: doc.stationId,
+//         mpiId: id,
+//       },
+//     });
+//   }
+// }
+
+//   // Step 2: Update Order Form
+//   if (data.orderForms) {
+//     console.log('📋 Updating order forms...');
+//     const existingOrderForm = await this.prisma.orderForm.findFirst({
+//       where: { mpiId: id },
+//     });
+
+//     if (existingOrderForm?.id) {
+//       await this.prisma.orderForm.update({
+//         where: { id: existingOrderForm.id },
+//         data: {
+//           ...data.orderForms,
+//         },
+//       });
+//     }
+//   }
+
+//   // Step 3: Update selected stations and their specs
+//   if (data.stations?.length) {
+//     console.log('🏭 Updating station selections for MPI...');
+
+//     // Unlink all previously assigned stations
+//     await this.prisma.station.updateMany({
+//       where: { mpiId: id },
+//       data: { mpiId: null },
+//     });
+
+//     // Assign new stations
+//     for (const station of data.stations) {
+//       if (!station.id) throw new Error("Station ID is required");
+
+//       console.log(`🔗 Linking station ${station.id} to MPI ${id}`);
+//       await this.prisma.station.update({
+//         where: { id: station.id },
+//         data: {
+//           mpiId: id,
+//           status: station.status,
+//           description: station.description,
+//           location: station.location,
+//           operator: station.operator,
+//           priority: station.priority ?? 0,
+//           Note: station.Note ?? [],
+//         },
+//       });
+
+//       // Handle specificationValues
+//       if (station.specificationValues?.length) {
+//         for (const spec of station.specificationValues) {
+//           if (!spec.specificationId) {
+//             throw new Error(`Missing specificationId for station: ${station.id}`);
+//           }
+
+//           console.log(`  ✏️ Upserting spec ${spec.specificationId} with value: ${spec.value}`);
+//           await this.prisma.stationSpecification.upsert({
+//             where: {
+//               stationId_specificationId: {
+//                 stationId: station.id,
+//                 specificationId: spec.specificationId,
+//               },
+//             },
+//             update: {
+//               value: spec.value,
+//               unit: spec.unit,
+//             },
+//             create: {
+//               stationId: station.id,
+//               specificationId: spec.specificationId,
+//               value: spec.value,
+//               unit: spec.unit,
+//             },
+//           });
+//         }
+//       }
+//     }
+//   }
+
+//   // Step 4: Checklists
+//   if (data.checklists?.length) {
+//     console.log('📋 Processing checklists:', data.checklists.length);
+
+//     for (const checklist of data.checklists) {
+//       if (!checklist.id) {
+//         const createdChecklist = await this.prisma.checklist.create({
+//           data: {
+//             name: checklist.name || 'Untitled Checklist',
+//             mpiId: id,
+//           },
+//         });
+
+//         if (checklist.checklistItems?.length) {
+//           const checklistItemsData = checklist.checklistItems
+//             .filter(item => !!item.description)
+//             .map(item => ({
+//               sectionId: createdChecklist.id,
+//               description: item.description!,
+//               required: item.required ?? true,
+//               remarks: item.remarks ?? '',
+//               createdBy: item.createdBy ?? 'user',
+//               isActive: item.isActive ?? true,
+//             }));
+
+//           if (checklistItemsData.length) {
+//             await this.prisma.checklistItem.createMany({
+//               data: checklistItemsData,
+//             });
+//           }
+//         }
+//       } else {
+//         await this.prisma.checklist.update({
+//           where: { id: checklist.id },
+//           data: {
+//             name: checklist.name,
+//           },
+//         });
+
+//         if (checklist.checklistItems?.length) {
+//           for (const item of checklist.checklistItems) {
+//             if (item.id) {
+//               await this.prisma.checklistItem.update({
+//                 where: { id: item.id },
+//                 data: {
+//                   description: item.description,
+//                   category: item.category,
+//                   required: item.required ?? true,
+//                   remarks: item.remarks ?? '',
+//                   createdBy: item.createdBy ?? 'system',
+//                   isActive: item.isActive ?? true,
+//                 },
+//               });
+//             } else {
+//               await this.prisma.checklistItem.create({
+//                 data: {
+//                   sectionId: checklist.id,
+//                   description: item.description!,
+//                   required: item.required ?? true,
+//                   remarks: item.remarks ?? '',
+//                   createdBy: item.createdBy ?? 'user',
+//                   isActive: item.isActive ?? true,
+//                 },
+//               });
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
+
+//   console.log('✅ MPI update completed, fetching updated data...');
+
+//   return this.prisma.mPI.findUnique({
+//     where: { id },
+//     include: this.includeRelations,
+//   });
+// }
+
+
+
+
+//   async remove(id: string) {
+//     return this.prisma.mPI.delete({ where: { id } });
+//   }
+// }
+
+
+
+import { Prisma } from '@prisma/client';
+
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateMpiDto, UpdateMpiDto, CreateChecklistItemDto } from './dto/mpi.dto';
+import { PrismaService } from 'prisma/prisma.service';
+import { CHECKLIST_TEMPLATE } from './template/checklist-template';
+
+@Injectable()
+export class MpiService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  private readonly includeRelations = {
+    stations: {
+      include: {
+        specifications: {
+          include: {
+            stationSpecifications: true,
+          },
+        },
+           documentations: true,
+
+      },
+    },
+    orderForms: true,
+    checklists: {
+      include: {
+        checklistItems: true,
+      },
+    },
+     mpiDocs: true,
+     stationMpiDocuments: true, // ✅ ADD THIS LINE
+  };
+
+async create(data: CreateMpiDto) {
+  // Step 1: Create MPI record
+  const createdMpi = await this.prisma.mPI.create({
+    data: {
+      jobId: data.jobId,
+      assemblyId: data.assemblyId,
+
+      
+      customer: data.customer, 
+
+Instruction: data.Instruction,
+
+    },
+  });
+
+// Step X: Create StationMpiDocuments
+if (data.stationMpiDocuments?.length) {
+  console.log('📄 Creating StationMpiDocuments...');
+
+  for (const doc of data.stationMpiDocuments) {
+    if (!doc.stationId) {
+      throw new Error('Station ID is required for StationMpiDocument');
+    }
+if (!doc.fileUrl) {
+  throw new Error('fileUrl is required for StationMpiDocument');
+}
+    await this.prisma.stationMpiDocument.create({
+      data: {
+        fileUrl: doc.fileUrl,
+        description: doc.description,
+        stationId: doc.stationId,
+        mpiId: createdMpi.id,
+             originalName: doc.originalName,
+      },
+    });
+  }
+}
+
+
+
+if (data.orderForms) {
+  await this.prisma.orderForm.create({
+    data: {
+      ...data.orderForms,
+      mpiId: createdMpi.id,
+    },
+  });
+}
+
+
+if (data.mpiDocs?.length) {
+  for (const doc of data.mpiDocs) {
+    await this.prisma.mpiDocumentation.create({
+      data: {
+        fileUrl: doc.fileUrl,
+        description: doc.description,
+        mpiId: createdMpi.id,
+             originalName: doc.originalName,
+      },
+    });
+  }
+}
+
+
+  
+if (data.stations?.length) {
+  for (const station of data.stations) {
+    if (!station.id) throw new Error('Station ID missing');
+
+    // Link station to MPI
+    await this.prisma.station.update({
+      where: { id: station.id },
+      data: { mpiId: createdMpi.id },
+    });
+
+    // Handle specification values
+    if (station.specificationValues?.length) {
+      for (const spec of station.specificationValues) {
+        if (!spec.specificationId) throw new Error('Specification ID missing');
+
+        await this.prisma.stationSpecification.upsert({
+          where: {
+            stationId_specificationId: {
+              stationId: station.id,
+              specificationId: spec.specificationId,
+            },
+          },
+          update: {
+            value: spec.value,
+            unit: spec.unit,
+          },
+          create: {
+            stationId: station.id,
+            specificationId: spec.specificationId,
+            value: spec.value,
+            unit: spec.unit,
+          },
+        });
+      }
+    }
+  }
+}
+
+
+if (data.checklists?.length) {
+  for (const userChecklist of data.checklists) {
+    const createdChecklist = await this.prisma.checklist.create({
+      data: {
+        name: userChecklist.name,
+        mpiId: createdMpi.id,
+      },
+    });
+
+    if (userChecklist.checklistItems?.length) {
+      const checklistItemsData: Prisma.ChecklistItemCreateManyInput[] = userChecklist.checklistItems
+        .filter(item => !!item.description)
+        .map(item => ({
+          sectionId: createdChecklist.id,
+          description: item.description!, // safe because we filtered above
+          required: item.required ?? true,
+          remarks: item.remarks ?? '',
+          createdBy: item.createdBy ?? 'user',
+          isActive: item.isActive ?? true,
+        }));
+
+      if (checklistItemsData.length) {
+        await this.prisma.checklistItem.createMany({ data: checklistItemsData });
+      }
+    }
+  }
+}
+
+  
+  // Step 5: Return MPI with all relations
+  return this.findOne(createdMpi.id);
+}
+
+
+  async findAll() {
+    return this.prisma.mPI.findMany({
+      include: this.includeRelations,
+    });
+  }
+
+  async findOne(id: string) {
+    const mpi = await this.prisma.mPI.findUnique({
+      where: { id },
+      include: this.includeRelations,
+    });
+
+    if (!mpi) {
+      throw new NotFoundException('MPI not found');
+    }
+
+    return mpi;
+  }
+
+
+
+async update(id: string, data: UpdateMpiDto) {
+  console.log('🔄 Starting MPI update for ID:', id);
+  console.log('📝 Update data received:', JSON.stringify(data, null, 2));
+
+  // Step 1: Update MPI base fields
+  const updatedMpi = await this.prisma.mPI.update({
+    where: { id },
+    data: {
+      jobId: data.jobId,
+      assemblyId: data.assemblyId,
+      customer: data.customer,
+      Instruction: data.Instruction,
+    },
+  });
+
+
+
+  // Step 5: Add StationMpiDocuments
+if (data.stationMpiDocuments?.length) {
+  console.log('📄 Updating StationMpiDocuments...');
+  
+  for (const doc of data.stationMpiDocuments) {
+    if (!doc.stationId) {
+      throw new Error('Station ID is required for StationMpiDocument');
+    }
+if (!doc.fileUrl) {
+  throw new Error('fileUrl is required for StationMpiDocument');
+}
+    await this.prisma.stationMpiDocument.create({
+      data: {
+        fileUrl: doc.fileUrl,
+        description: doc.description,
+        stationId: doc.stationId,
+        mpiId: id,
+                     originalName: doc.originalName,
+
+
+      },
+    });
+  }
+}
+
+  // Step 2: Update Order Form
+  if (data.orderForms) {
+    console.log('📋 Updating order forms...');
+    const existingOrderForm = await this.prisma.orderForm.findFirst({
+      where: { mpiId: id },
+    });
+
+    if (existingOrderForm?.id) {
+      await this.prisma.orderForm.update({
+        where: { id: existingOrderForm.id },
+        data: {
+          ...data.orderForms,
+        },
+      });
+    }
+  }
+
+  // Step 3: Update selected stations and their specs
+  if (data.stations?.length) {
+    console.log('🏭 Updating station selections for MPI...');
+
+    // Unlink all previously assigned stations
+    await this.prisma.station.updateMany({
+      where: { mpiId: id },
+      data: { mpiId: null },
+    });
+
+    // Assign new stations
+    for (const station of data.stations) {
+      if (!station.id) throw new Error("Station ID is required");
+
+      console.log(`🔗 Linking station ${station.id} to MPI ${id}`);
+      await this.prisma.station.update({
+        where: { id: station.id },
+        data: {
+          mpiId: id,
+          status: station.status,
+          description: station.description,
+          location: station.location,
+          operator: station.operator,
+          priority: station.priority ?? 0,
+          Note: station.Note ?? [],
+        },
+      });
+
+      // Handle specificationValues
+      if (station.specificationValues?.length) {
+        for (const spec of station.specificationValues) {
+          if (!spec.specificationId) {
+            throw new Error(`Missing specificationId for station: ${station.id}`);
+          }
+
+          console.log(`  ✏️ Upserting spec ${spec.specificationId} with value: ${spec.value}`);
+          await this.prisma.stationSpecification.upsert({
+            where: {
+              stationId_specificationId: {
+                stationId: station.id,
+                specificationId: spec.specificationId,
+              },
+            },
+            update: {
+              value: spec.value,
+              unit: spec.unit,
+            },
+            create: {
+              stationId: station.id,
+              specificationId: spec.specificationId,
+              value: spec.value,
+              unit: spec.unit,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  // Step 4: Checklists
+  if (data.checklists?.length) {
+    console.log('📋 Processing checklists:', data.checklists.length);
+
+    for (const checklist of data.checklists) {
+      if (!checklist.id) {
+        const createdChecklist = await this.prisma.checklist.create({
+          data: {
+            name: checklist.name || 'Untitled Checklist',
+            mpiId: id,
+          },
+        });
+
+        if (checklist.checklistItems?.length) {
+          const checklistItemsData = checklist.checklistItems
+            .filter(item => !!item.description)
+            .map(item => ({
+              sectionId: createdChecklist.id,
+              description: item.description!,
+              required: item.required ?? true,
+              remarks: item.remarks ?? '',
+              createdBy: item.createdBy ?? 'user',
+              isActive: item.isActive ?? true,
+            }));
+
+          if (checklistItemsData.length) {
+            await this.prisma.checklistItem.createMany({
+              data: checklistItemsData,
+            });
+          }
+        }
+      } else {
+        await this.prisma.checklist.update({
+          where: { id: checklist.id },
+          data: {
+            name: checklist.name,
+          },
+        });
+
+        if (checklist.checklistItems?.length) {
+          for (const item of checklist.checklistItems) {
+            if (item.id) {
+              await this.prisma.checklistItem.update({
+                where: { id: item.id },
+                data: {
+                  description: item.description,
+                  category: item.category,
+                  required: item.required ?? true,
+                  remarks: item.remarks ?? '',
+                  createdBy: item.createdBy ?? 'system',
+                  isActive: item.isActive ?? true,
+                },
+              });
+            } else {
+              await this.prisma.checklistItem.create({
+                data: {
+                  sectionId: checklist.id,
+                  description: item.description!,
+                  required: item.required ?? true,
+                  remarks: item.remarks ?? '',
+                  createdBy: item.createdBy ?? 'user',
+                  isActive: item.isActive ?? true,
+                },
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  console.log('✅ MPI update completed, fetching updated data...');
+
+  return this.prisma.mPI.findUnique({
+    where: { id },
+    include: this.includeRelations,
+  });
+}
+
+
+
+
+  async remove(id: string) {
+    return this.prisma.mPI.delete({ where: { id } });
+  }
+}
+

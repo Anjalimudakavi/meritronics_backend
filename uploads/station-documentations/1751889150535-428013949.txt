@@ -1,0 +1,64 @@
+{
+    "id": "cmc50hbp70000qiefqzbbxfs6",
+    "name": "Electronics",
+    "description": "Industry related to electronic components and devices",
+    "status": "active",
+    "createdAt": "2025-06-20T16:15:37.339Z",
+    "updatedAt": "2025-06-20T16:15:37.339Z"
+}
+
+
+{
+    "id": "cmc50ka1w0001qiefc3wfz946",
+    "rate": 7.5,
+    "county": "Orange County",
+    "city": "Anaheim",
+    "zipCode": "92801",
+    "description": "Standard sales tax rate for electronics",
+    "createdAt": "2025-06-20T16:17:55.172Z",
+    "updatedAt": "2025-06-20T16:17:55.172Z"
+}
+
+{
+    "id": "cmc50n3b70004qief145qtth4",
+    "name": "Net 30",
+    "days": 30,
+    "description": "Payment due within 30 days of invoice date",
+    "status": "active",
+    "createdAt": "2025-06-20T16:20:06.402Z",
+    "updatedAt": "2025-06-20T16:20:06.402Z"
+}
+
+{
+    "id": "cmc50phhw0006qiefguo1mt1m",
+    "name": "Acme Electronics Pvt Ltd",
+    "email": "contact@acmeelectronics.com",
+    "phone": "9876543210",
+    "address": "123 Tech Park Lane",
+    "city": "Anaheim",
+    "county": "Orange County",
+    "zipCode": "92801",
+    "state": "California",
+    "country": "USA",
+    "website": "https://www.acmeelectronics.com",
+    "status": "active",
+    "createdBy": "admin_user",
+    "updatedBy": "admin_user",
+    "createdAt": "2025-06-20T16:21:58.101Z",
+    "updatedAt": "2025-06-20T16:21:58.101Z",
+    "creditTermId": "cmc50n3b70004qief145qtth4",
+    "taxId": "cmc50ka1w0001qiefc3wfz946",
+    "industryId": "cmc50hbp70000qiefqzbbxfs6",
+    "creditTerm": {
+        "id": "cmc50n3b70004qief145qtth4",
+        "name": "Net 30"
+    },
+    "tax": {
+        "id": "cmc50ka1w0001qiefc3wfz946",
+        "rate": 7.5
+    },
+    "industryType": {
+        "id": "cmc50hbp70000qiefqzbbxfs6",
+        "name": "Electronics"
+    }
+}

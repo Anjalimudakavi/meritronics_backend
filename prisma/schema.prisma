@@ -7,8 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-enum inputType {  
+enum inputType {
   TEXT
   CHECKBOX
   DROPDOWN
@@ -25,202 +24,360 @@ enum OrderType {
   DEFENSE
 }
 
-
-
-
 enum FileAction {
   REPLACE_EARLIER_REVISION
   ADD_THIS_REVISION
   PULL_FROM_FILES
 }
+
 model MPI {
-  id                        String                  @id @default(cuid())
-jobId                       String                  @unique
-assemblyId                  String                  @unique
-  customer            String?
-  Instruction           String[] 
-  stations                 Station[]
-  orderForms   OrderForm[]  
-   checklists               Checklist[]
-   changeOrders   ChangeOrder[]  
-     mpiDocs         MpiDocumentation[]  
+  id                  String               @id @default(cuid())
  
+  mpiName             String               @unique
+  assemblyName          String              @unique
+  customer            String?
+  Instruction         String[]
+  stations            Station[]
+  orderForms          OrderForm[]
+  checklists          Checklist[]
+  changeOrders        ChangeOrder[]
+  mpiDocs             MpiDocumentation[]
+  stationMpiDocuments StationMpiDocument[] // <-- Add this
 }
 
+model StationMpiDocument {
+  id String @id @default(cuid())
 
-model MpiDocumentation { 
-  id          String   @id @default(cuid())
-  fileUrl     String?  // Optional file URL or path
-  description String?  // Optional description
+  fileUrl      String
+  description  String?
+  stationId    String?
+  station      Station? @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  originalName String?
+  mpiId        String?
+  mpi          MPI?     @relation(fields: [mpiId], references: [id], onDelete: Cascade)
 
-  mpiId       String                      // Foreign key
-  mpi         MPI        @relation(fields: [mpiId], references: [id],  onDelete: Cascade) // Relation
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted Boolean  @default(false)
+}
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model MpiDocumentation {
+  id           String  @id @default(cuid())
+  fileUrl      String? // Optional file URL or path
+  description  String? // Optional description
+  originalName String?
+  mpiId        String // Foreign key
+  mpi          MPI     @relation(fields: [mpiId], references: [id], onDelete: Cascade) // Relation
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Station {
-  id            String         @id @default(cuid())
-  stationId     String         @unique
-  stationName   String
+  id             String          @id @default(cuid())
+  stationId      String          @unique
+  stationName    String
   specifications Specification[]
-  mpiId         String?
-  mpi           MPI?           @relation(fields: [mpiId], references: [id])
+  mpiId          String?
+  mpi            MPI?            @relation(fields: [mpiId], references: [id])
 
   // New fields
-  status        String?
-  description   String?
-  location      String?
-  operator     String?
-priority Int? @default(0)
+  status      String?
+  description String?
+  location    String?
+  operator    String?
+  priority    Int?    @default(0)
 
+  Note String[]
 
-
- Note String[] 
-
-  
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  isDeleted     Boolean        @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  isDeleted             Boolean                @default(false)
   // New relations
-  documentations Documentation[]
-  flowcharts     Flowchart[]
+  documentations        Documentation[]
+  flowcharts            Flowchart[]
   stationSpecifications StationSpecification[]
+  stationMpiDocuments   StationMpiDocument[] // <-- Add this
 }
 
 model Documentation {
-  id          String   @id @default(cuid())
-  fileUrl     String?  // Optional file URL or path
-  description String?  // Optional description
-  stationId   String
-  station     Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id           String   @id @default(cuid())
+  fileUrl      String? // Optional file URL or path
+  description  String? // Optional description
+  stationId    String
+  originalName String?
+  station      Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Flowchart {
-  id          String   @id @default(cuid())
-  fileUrl     String?  // Optional file URL or path
-  description String?  // Optional description
-  stationId   String
-  station     Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  fileUrl      String? // Optional file URL or path
+  originalName String?
+  description  String? // Optional description
+  stationId    String
+  station      Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
-
 
 model Specification {
-  id           String   @id @default(cuid())
-  name         String
-  slug         String   
-  inputType         inputType     @default(TEXT)
-suggestions  String[]  
-required     Boolean       @default(false) // Used for CHECKBOX    
-  stationId String
-  station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
-    stationSpecifications StationSpecification[]
-  @@unique([slug, stationId])     
+  id                    String                 @id @default(cuid())
+  name                  String
+  slug                  String
+  inputType             inputType              @default(TEXT)
+  suggestions           String[]
+  required              Boolean                @default(false) // Used for CHECKBOX    
+  stationId             String
+  station               Station                @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  stationSpecifications StationSpecification[]
+
+  @@unique([slug, stationId])
 }
 
-
- model StationSpecification {
-   id             String        @id @default(cuid())
-   specificationId String
-   stationId      String
-   station        Station       @relation(fields: [stationId], references: [id], onDelete: Cascade)
-     value          String
-   unit             String?
-  specification  Specification @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+model StationSpecification {
+  id              String        @id @default(cuid())
+  specificationId String
+  stationId       String
+  station         Station       @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  value           String
+  unit            String?
+  specification   Specification @relation(fields: [specificationId], references: [id], onDelete: Cascade)
 
   @@unique([stationId, specificationId]) // prevents duplicate entries for same station+spec
- }
-
-
-
+}
 
 model OrderForm {
-  id                  String           @id @default(cuid())
-  orderType           OrderType[]      // ✅ use enum array
-  distributionDate    DateTime?
-  requiredBy          DateTime?
+  id               String      @id @default(cuid())
+  OrderType        OrderType[] // ✅ use enum array
+  distributionDate DateTime?
+  requiredBy       DateTime?
 
-  internalOrderNumber String?
   revision            String?
   otherAttachments    String?
- fileAction          FileAction[]
-  markComplete        Boolean          @default(false)
+  fileAction          FileAction[]
+  markComplete        Boolean      @default(false)
 
-  documentControl     DocumentControl? @relation("OrderFormToDocControl")
-  documentControlId   String?          @unique
-
-  mpiId               String?
-  mpi                 MPI?             @relation(fields: [mpiId], references: [id])
+changeOrderNumber   String?
+  services Service[] @relation("OrderFormServices") // 🔁 renamed field
+  mpiId    String?
+  mpi      MPI?      @relation(fields: [mpiId], references: [id], onDelete: Cascade)
 }
-
-
-model DocumentControl {
-  id              String      @id @default(cuid())
-  dateProcessed   DateTime?
-  clerkName       String?
-  totalPageCount  Int?
-  mamsDataEntry   String?
-  description     String?
-  enteredBy       String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  orderFormId     String?     @unique
-  orderForm       OrderForm?  @relation("OrderFormToDocControl", fields: [orderFormId], references: [id])
-}
-
-
-
 
 model Checklist {
-  id             String           @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
-  mpiId          String?          // ✅ Relation to MPI
-  mpi            MPI?             @relation(fields: [mpiId], references: [id])
+  mpiId          String? // ✅ Relation to MPI
+  mpi            MPI?            @relation(fields: [mpiId], references: [id])
   checklistItems ChecklistItem[] // ✅ Items under this checklist
 
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
 model ChecklistItem {
-  id           String           @id @default(cuid())
-  description  String
-  category     String?
-  required     Boolean          @default(true)
-  remarks      String?
-  isActive     Boolean          @default(true)
-  createdBy    String?
-  sectionId    String
-  section      Checklist        @relation(fields: [sectionId], references: [id])
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @default(now()) @updatedAt
+  id          String    @id @default(cuid())
+  description String
+  category    String?
+  required    Boolean   @default(true)
+  remarks     String?
+  isActive    Boolean   @default(true)
+  createdBy   String?
+  sectionId   String
+  section     Checklist @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
 }
 
 model ChangeOrder {
-  id               String              @id @default(cuid())
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   changeorder_name String
   mpiId            String?
-  mpi              MPI?                @relation(fields: [mpiId], references: [id])
+  mpi              MPI?    @relation(fields: [mpiId], references: [id], onDelete: Cascade)
 
-  detail           ChangeOrderDetail?  @relation("ChangeOrderToDetail")
+  detail ChangeOrderDetail? @relation("ChangeOrderToDetail")
 }
 
 model ChangeOrderDetail {
-  id             String   @id @default(cuid())
+  id             String  @id @default(cuid())
   isRequired     Boolean
   description    String?
-  replaceEarlier Boolean  @default(false)
-  addRevision    Boolean  @default(false)
+  replaceEarlier Boolean @default(false)
+  addRevision    Boolean @default(false)
   pullFromFiles  String?
 
-  changeOrderId  String   @unique
-  changeOrder    ChangeOrder @relation("ChangeOrderToDetail", fields: [changeOrderId], references: [id])
+  changeOrderId String      @unique
+  changeOrder   ChangeOrder @relation("ChangeOrderToDetail", fields: [changeOrderId], references: [id])
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderForms OrderForm[] @relation("OrderFormServices")
+}
+
+// Role Model
+model Role {
+  id           String           @id @default(cuid())
+  name         String           @unique
+  description  String?
+  permissions  RolePermission[]
+  departmentId String?
+  department   Department?      @relation(fields: [departmentId], references: [id])
+  users        User[]
+  employees    Employee[]
+  designations Designation[]
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+}
+
+// Permission Model
+model Permission {
+  id           String                  @id @default(cuid())
+  name         String                  @unique
+  description  String?
+  isActive     Boolean                 @default(true)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+  roles        RolePermission[]
+  designations DesignationPermission[]
+}
+
+model DesignationPermission {
+  id            String      @id @default(cuid())
+  designationId String
+  permissionId  String
+  designation   Designation @relation(fields: [designationId], references: [id], onDelete: Cascade)
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// RolePermission Model
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now())
+}
+
+//Department Model
+model Department {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  description  String?
+  isActive     Boolean       @default(true)
+  roles        Role[]
+  designations Designation[] // ✅ Already optional (array)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Designation {
+  id           String     @id @default(cuid())
+  title        String
+  isActive     Boolean    @default(true)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  departmentId String
+  employees    Employee[] @relation("EmployeeDesignation")
+
+  roleId String? // ✅ Optional foreign key
+  role   Role?   @relation(fields: [roleId], references: [id])
+
+  permissions DesignationPermission[] // ✅ Already optional (array)
+  createdAt   DateTime                @default(now())
+}
+
+model Employee {
+  id        String    @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String    @unique
+  phone     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  roleId    String
+
+  designationId String?
+  designation   Designation? @relation("EmployeeDesignation", fields: [designationId], references: [id]) // ✅ matches the above    // 👈 FK to Designation
+  role          Role         @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user          User?        @relation("EmployeeUser")
+}
+
+// Organization Model
+model Organization {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  address   String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+}
+
+//User Model
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  username     String   @unique
+  employeeId   String   @unique
+  email        String   @unique
+  password     String
+  phone        String?
+  status       String?  @default("active")
+  refreshToken String?
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade, name: "EmployeeUser")
+  role         Role     @relation(fields: [roleId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  roleId       String
+}
+
+// Customer Management Models
+model Customer {
+  id      String  @id @default(cuid())
+  name    String
+  email   String  @unique
+  phone   String
+  address String?
+  city    String?
+  county  String?
+  zipCode String?
+  state   String?
+  country String?
+  website String?
+  status  String  @default("active")
+
+  createdBy String?
+  updatedBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdBy])
+  @@index([updatedBy])
 }

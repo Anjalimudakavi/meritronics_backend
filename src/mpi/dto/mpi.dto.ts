@@ -1,239 +1,3 @@
-// // import {
-// //   IsString,
-// //   IsOptional,
-// //   IsArray,
-// //   ValidateNested,
-// //   IsEnum,
-// //   IsNotEmpty,
-// // } from 'class-validator';
-// // import { Type } from 'class-transformer';
-
-// // enum InputType {
-// //   TEXT = 'TEXT',
-// //   CHECKBOX = 'CHECKBOX',
-// //   DROPDOWN = 'DROPDOWN',
-// //   FILE_UPLOAD = 'FILE_UPLOAD',
-// //   number = 'number',
-// // }
-
-// // class SpecificationDto {
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   name: string;
-
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   slug: string;
-
-// //   @IsOptional()
-// //   @IsEnum(InputType)
-// //   inputType?: InputType;
-// // }
-
-// // class StationDto {
-// // //   @IsString()
-// // //   @IsNotEmpty()
-// // //   stationId: string;
-
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   id: string; // ✅ Add this
-
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   stationName: string;
-
-// //   @IsOptional()
-// //   @IsArray()
-// //   @ValidateNested({ each: true })
-// //   @Type(() => SpecificationDto)
-// //   specifications?: SpecificationDto[];
-// // }
-
-// // export class CreateOrUpdateMpiDto {
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   jobId: string;
-
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   assemblyId: string;
-
-// //   @IsOptional()
-// //   @IsArray()
-// //   @ValidateNested({ each: true })
-// //   @Type(() => StationDto)
-// //   stations?: StationDto[];
-// // }
-
-
-
-
-// // import {
-// //   IsString,
-// //   IsOptional,
-// //   IsArray,
-// //   ValidateNested,
-// //   IsEnum,
-// //   IsNotEmpty,
-// // } from 'class-validator';
-// // import { Type } from 'class-transformer';
-
-// // enum InputType {
-// //   TEXT = 'TEXT',
-// //   CHECKBOX = 'CHECKBOX',
-// //   DROPDOWN = 'DROPDOWN',
-// //   FILE_UPLOAD = 'FILE_UPLOAD',
-// //   number = 'number',
-// // }
-
-// // class SpecificationDto {
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   name: string;
-
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   slug: string;
-
-// //   @IsOptional()
-// //   @IsEnum(InputType)
-// //   inputType?: InputType;
-// // }
-
-// // class DocumentationDto {
-// //   @IsOptional()
-// //   @IsString()
-// //   fileUrl?: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   description?: string;
-// // }
-
-// // class FlowchartDto {
-// //   @IsOptional()
-// //   @IsString()
-// //   fileUrl?: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   description?: string;
-// // }
-
-// // class StationDto {
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   id: string;
-
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   stationName: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   stationId?: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   mpiId?: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   status?: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   description?: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   location?: string;
-
-// //   @IsOptional()
-// //   @IsString()
-// //   operator?: string;
-
-// //   @IsOptional()
-// //   @IsArray()
-// //   @ValidateNested({ each: true })
-// //   @Type(() => SpecificationDto)
-// //   specifications?: SpecificationDto[];
-
-// //   @IsOptional()
-// //   @IsArray()
-// //   @ValidateNested({ each: true })
-// //   @Type(() => DocumentationDto)
-// //   documentations?: DocumentationDto[];
-
-// //   @IsOptional()
-// //   @IsArray()
-// //   @ValidateNested({ each: true })
-// //   @Type(() => FlowchartDto)
-// //   flowcharts?: FlowchartDto[];
-// // }
-
-// // export class CreateOrUpdateMpiDto {
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   jobId: string;
-
-// //   @IsString()
-// //   @IsNotEmpty()
-// //   assemblyId: string;
-
-// //   @IsOptional()
-// //   @IsArray()
-// //   @ValidateNested({ each: true })
-// //   @Type(() => StationDto)
-// //   stations?: StationDto[];
-// // }
-
-
-// import {
-//   IsString,
-//   IsOptional,
-//   IsArray,
-//   ValidateNested,
-//   IsNotEmpty,
-// } from 'class-validator';
-// import { Type } from 'class-transformer';
-// import { CreateStationDto, UpdateStationDto } from '../../station/dto/station.dto';
-
-// export class CreateMpiDto {
-//   @IsString()
-//   @IsNotEmpty()
-//   jobId: string;
-
-//   @IsString()
-//   @IsNotEmpty()
-//   assemblyId: string;
-
-//   @IsOptional()
-//   @IsArray()
-//   @ValidateNested({ each: true })
-//   @Type(() => CreateStationDto)
-//   stations?: CreateStationDto[];
-// }
-
-// export class UpdateMpiDto {
-//   @IsOptional()
-//   @IsString()
-//   jobId?: string;
-
-//   @IsOptional()
-//   @IsString()
-//   assemblyId?: string;
-
-//   @IsOptional()
-//   @IsArray()
-//   @ValidateNested({ each: true })
-//   @Type(() => UpdateStationDto)
-//   stations?: UpdateStationDto[];
-// }
-
-
-// dto/mpi.dto.ts
 
 
 import {
@@ -244,6 +8,7 @@ import {
   IsNotEmpty,
   IsEnum,
   IsDate,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateStationDto, UpdateStationDto } from '../../station/dto/station.dto';
@@ -259,6 +24,9 @@ export class CreateMpiDocumentationDto {
   @IsOptional()
   @IsString()
   fileUrl?: string;
+@IsOptional()
+@IsString()
+originalName?: string;
 
   @IsOptional()
   @IsString()
@@ -266,31 +34,21 @@ export class CreateMpiDocumentationDto {
 }
 
 class CreateOrderFormDto {
-  // @IsOptional()
-  // @IsArray()
-  // @IsEnum(OrderType, { each: true })
-  // orderTypes?: OrderType[];
-@IsOptional()
-@IsArray()
-@IsEnum(OrderType, { each: true })
-orderType?: OrderType[];  // ✅ array of enums
 
-
+    @IsOptional() // ✅ Add this
+   @IsArray()
+  @IsEnum(OrderType, { each: true })
+  OrderType: OrderType[];
 
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  distributionDate?: Date;
+  @IsDateString()
+  distributionDate?: string;
 
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  requiredBy?: Date;
+  @IsDateString()
+  requiredBy?: string;
 
-
-  @IsOptional()
-  @IsString()
-  internalOrderNumber?: string;
+  
 
   @IsOptional()
   @IsString()
@@ -300,12 +58,23 @@ orderType?: OrderType[];  // ✅ array of enums
   @IsString()
   otherAttachments?: string;
 
-  @IsOptional()
   @IsArray()
   @IsEnum(FileAction, { each: true })
-  fileAction?: FileAction[];
-  
+  fileAction: FileAction[];
 
+
+
+  @IsOptional()
+  @IsString()
+  changeOrderNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  mpiId?: string;
+    @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  serviceIds?: string[];
 }
 
 export class CreateChecklistItemDto {
@@ -351,22 +120,49 @@ export class CreateChecklistDto {
   @Type(() => CreateChecklistItemDto)
   checklistItems?: CreateChecklistItemDto[];
 }
+export class CreateStationMpiDocumentDto {
+    @IsOptional()
+  @IsString()
+  id?: string;
+ 
+
+  @IsString()
+  fileUrl: string;
+@IsOptional()
+@IsString()
+originalName?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  stationId?: string;
+}
 
 export class CreateMpiDto {
   @IsString()
   @IsNotEmpty()
-  jobId: string;
+  mpiName: string;
 
   @IsString()
   @IsNotEmpty()
-  assemblyId: string;
+  assemblyName: string;
 
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => CreateOrderFormDto)
-  orderForms?: CreateOrderFormDto;
+  // @IsOptional()
+  //   @IsArray()
+  // @ValidateNested()
+  // @Type(() => CreateOrderFormDto)
+  // orderForms?: CreateOrderFormDto;
 
-  
+@IsOptional()
+@IsArray()
+@ValidateNested({ each: true })
+@Type(() => CreateOrderFormDto)
+orderForms?: CreateOrderFormDto[];
+
+
   @IsOptional()
   @IsString()
   customer?: string;
@@ -385,6 +181,11 @@ export class CreateMpiDto {
   @Type(() => CreateStationDto)
   stations?: CreateStationDto[];
 
+@IsOptional()
+@IsArray()
+@ValidateNested({ each: true })
+@Type(() => CreateStationMpiDocumentDto)
+stationMpiDocuments?: CreateStationMpiDocumentDto[];
 
   @IsOptional()
 @IsArray()
@@ -397,6 +198,12 @@ mpiDocs?: CreateMpiDocumentationDto[];
   @ValidateNested({ each: true })
   @Type(() => CreateChecklistDto)
   checklists?: CreateChecklistDto[];
+
+    @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  serviceIds?: string[];
+
 }
 
 export class UpdateMpiDocumentationDto {
@@ -404,9 +211,13 @@ export class UpdateMpiDocumentationDto {
   @IsString()
   id?: string;
 
-  @IsOptional()
+
   @IsString()
-  fileUrl?: string;
+  fileUrl: string;
+
+  @IsOptional()
+@IsString()
+originalName?: string;
 
   @IsOptional()
   @IsString()
@@ -456,21 +267,23 @@ class UpdateChecklistDto {
   @Type(() => UpdateChecklistItemDto)
   checklistItems?: UpdateChecklistItemDto[];
 }
+
+
 class UpdateOrderFormDto {
   @IsOptional()
+@IsString()
+id?: string;
   @IsArray()
   @IsEnum(OrderType, { each: true })
-  orderType?: OrderType[];
+  OrderType: OrderType[];
 
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  distributionDate?: Date;
+  @IsDateString()
+  distributionDate?: string;
 
   @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  requiredBy?: Date;
+  @IsDateString()
+  requiredBy?: string;
 
   @IsOptional()
   @IsString()
@@ -484,20 +297,51 @@ class UpdateOrderFormDto {
   @IsString()
   otherAttachments?: string;
 
-  @IsOptional()
   @IsArray()
   @IsEnum(FileAction, { each: true })
-  fileAction?: FileAction[];
+  fileAction: FileAction[];
+
+
+
+  @IsOptional()
+  @IsString()
+  changeOrderNumber?: string;
+
+    @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  serviceIds?: string[];
+ 
 }
 
+export class UpdateStationMpiDocumentDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  fileUrl?: string;
+@IsOptional()
+@IsString()
+originalName?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  stationId?: string;
+}
 export class UpdateMpiDto {
   @IsOptional()
   @IsString()
-  jobId?: string;
+  mpiName?: string;
 
   @IsOptional()
   @IsString()
-  assemblyId?: string;
+  assemblyName?: string;
 
     @IsOptional()
   @IsString()
@@ -509,12 +353,11 @@ export class UpdateMpiDto {
   @IsString({ each: true })
   Instruction?: string[];
 
-
- @IsOptional()
-@ValidateNested()
+@IsOptional()
+@IsArray()
+@ValidateNested({ each: true })
 @Type(() => UpdateOrderFormDto)
-orderForms?: UpdateOrderFormDto;
-
+orderForms?: UpdateOrderFormDto[];
 
 @IsOptional()
 @IsArray()
@@ -522,7 +365,11 @@ orderForms?: UpdateOrderFormDto;
 @Type(() => UpdateMpiDocumentationDto)
 mpiDocs?: UpdateMpiDocumentationDto[];
 
-
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateStationMpiDocumentDto)
+  stationMpiDocuments?: UpdateStationMpiDocumentDto[];
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

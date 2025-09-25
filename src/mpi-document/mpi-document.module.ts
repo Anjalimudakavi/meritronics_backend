@@ -6,6 +6,7 @@ import { PrismaModule } from 'prisma/prisma.module';
          imports: [PrismaModule],
   
   controllers: [MpiDocumentController],
-  providers: [MpiDocumentService]
+  providers: [MpiDocumentService],
+   exports: [MpiDocumentService],
 })
 export class MpiDocumentModule {}

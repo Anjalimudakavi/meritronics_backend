@@ -1,46 +1,3 @@
-// import {
-//   Controller,
-//   Post,
-//   Param,
-//   UploadedFile,
-//   UseInterceptors,
-//   Body,
-// } from '@nestjs/common';
-// import { FileInterceptor } from '@nestjs/platform-express';
-// import { diskStorage } from 'multer';
-// import { extname } from 'path';
-// import { MpiDocumentService } from './mpi-document.service';
-
-// @Controller('mpi-document')
-// export class MpiDocumentController {
-//   constructor(private readonly mpiDocumentService: MpiDocumentService) {}
-
-//   @Post(':mpiId/upload')
-//   @UseInterceptors(
-//     FileInterceptor('file', {
-//       storage: diskStorage({
-//         destination: './uploads/mpidocs',
-//         filename: (req, file, cb) => {
-//           const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-//           cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-//         },
-//       }),
-//     }),
-//   )
-//   async uploadFile(
-//     @Param('mpiId') mpiId: string,
-//     @UploadedFile() file: Express.Multer.File,
-//     @Body('description') description?: string,
-//   )
-//    {
-//     const fileUrl = `/uploads/mpidocs/${file.filename}`;
-//     return this.mpiDocumentService.create({
-//       fileUrl,
-//       description,
-//       mpiId,
-//     });
-//   }
-// }
 
 
 import {
@@ -54,18 +11,20 @@ import {
   Patch,
   Delete,
   NotFoundException,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync, unlinkSync } from 'fs';
+import { Response } from 'express';
 import { MpiDocumentService } from './mpi-document.service';
-import { unlinkSync } from 'fs';
 
 @Controller('mpi-document')
 export class MpiDocumentController {
   constructor(private readonly mpiDocumentService: MpiDocumentService) {}
 
-  // CREATE
+  // ✅ CREATE / Upload file
   @Post(':mpiId/upload')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -83,21 +42,39 @@ export class MpiDocumentController {
     @UploadedFile() file: Express.Multer.File,
     @Body('description') description?: string,
   ) {
-    const fileUrl = `/uploads/mpidocs/${file.filename}`;
+    const fileUrl = `http://54.177.111.218:4000/uploads/mpidocs/${file.filename}`;
+    const originalName = file.originalname;
+
     return this.mpiDocumentService.create({
       fileUrl,
       description,
       mpiId,
+      originalName,
     });
   }
 
-  // READ ALL
+  // ✅ DOWNLOAD by ID (fixed path resolution)
+  @Get(':id/download')
+  async downloadById(@Param('id') id: string, @Res() res: Response) {
+    const doc = await this.mpiDocumentService.findOne(id);
+    if (!doc || !doc.fileUrl) {
+      throw new NotFoundException('MPI document not found');
+    }
+
+    const fileName = doc.fileUrl.split('/').pop() || ''; // extract just the filename, fallback to empty string
+    const filePath = join(process.cwd(), 'uploads', 'mpidocs', fileName); // correct local path
+
+    const downloadName = doc.originalName || `mpi-document-${id}${extname(fileName)}`;
+    return res.download(filePath, downloadName);
+  }
+
+  // ✅ READ ALL
   @Get()
   async findAll() {
     return this.mpiDocumentService.findAll();
   }
 
-  // READ ONE
+  // ✅ READ ONE
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const doc = await this.mpiDocumentService.findOne(id);
@@ -105,26 +82,30 @@ export class MpiDocumentController {
     return doc;
   }
 
-  // UPDATE DESCRIPTION
+  // ✅ UPDATE description
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body('description') description: string,
-  ) {
+  async update(@Param('id') id: string, @Body('description') description: string) {
     return this.mpiDocumentService.update(id, { description });
   }
 
-  // DELETE
+  // ✅ DELETE (fixed file unlink path)
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const doc = await this.mpiDocumentService.findOne(id);
     if (!doc) throw new NotFoundException('Document not found');
 
-    const filePath = `.${doc.fileUrl}`;
+    if (!doc.fileUrl) {
+      throw new NotFoundException('File URL not found for this document');
+    }
+    const fileName = doc.fileUrl.split('/').pop() || ''; // extract filename
+    const filePath = join(process.cwd(), 'uploads', 'mpidocs', fileName); // correct local path
+
     try {
-      unlinkSync(filePath);
+      if (existsSync(filePath)) {
+        unlinkSync(filePath);
+      }
     } catch (err) {
-      console.warn(`File not found on disk: ${filePath}`);
+      console.warn(`Failed to delete file: ${filePath}`);
     }
 
     return this.mpiDocumentService.remove(id);

@@ -1,0 +1,65 @@
+Laser Etching / Labelling:
+In this station, laser technology is used to permanently mark components or PCBs (Printed Circuit Boards) with serial numbers, barcodes, QR codes, or part numbers for traceability. Unlike stickers or ink, laser marking is durable and resistant to environmental wear.
+
+Screen Printing:
+Screen printing applies solder paste to the surface of a bare PCB using a stencil. This solder paste consists of tiny metal particles and flux, forming the basis for mounting SMT (Surface Mount Technology) components. Precision is critical to ensure proper alignment and volume.
+
+SPI (Solder Paste Inspection):
+Solder Paste Inspection checks the solder paste deposits applied during screen printing. Using 3D imaging, it verifies correct placement, volume, height, and shape to ensure reliable solder joints in the subsequent assembly steps.
+
+SMT Pick & Place:
+At this station, automated machines pick surface mount components from reels or trays and place them accurately onto the solder paste-covered pads of the PCB. High-speed and high-precision machinery handles even the smallest components with exact positioning.
+
+Hand Placement (SMT):
+For components that are too complex, sensitive, or large for automated machines—like connectors, switches, or certain ICs—trained operators manually place them on the PCB. This step ensures flexibility in handling non-standard parts.
+
+Reflow:
+The reflow oven heats the entire PCB to melt the solder paste, forming solid electrical and mechanical connections between SMT components and the board. The oven uses a controlled temperature profile to avoid damaging sensitive components.
+
+AOI (Automated Optical Inspection):
+AOI systems use high-resolution cameras and image processing to inspect solder joints, component presence, polarity, and alignment. It's a key quality control step to catch assembly defects after reflow soldering.
+
+Visual Inspection:
+Skilled technicians manually inspect PCBs for defects not easily detected by machines—like lifted leads, incorrect orientation, or cosmetic flaws. This human check complements automated systems and covers edge cases.
+
+X-Ray:
+X-ray inspection is used for examining hidden solder joints, especially under components like BGAs (Ball Grid Arrays), where visual inspection isn't feasible. It detects voids, bridging, or insufficient solder beneath opaque parts.
+
+Touch Up:
+This station involves manual correction of minor defects found during inspection—like re-soldering cold joints, repositioning misaligned parts, or fixing insufficient solder. It ensures boards meet quality standards before proceeding.
+
+Manual Load (PTH):
+Here, operators insert through-hole components (like capacitors, transformers, or connectors) manually into pre-drilled holes on the PCB. These parts typically require human handling due to size, shape, or complexity.
+
+Wave Solder:
+The loaded PCBs are passed over a molten wave of solder, which simultaneously solders all through-hole component leads. It's an efficient method for mass soldering PTH components, especially in mixed-technology boards.
+
+Wash-Clean:
+After soldering, PCBs are cleaned to remove flux residues and contaminants using deionized water or specific cleaning agents. This step prevents corrosion and improves long-term reliability, especially for high-reliability applications.
+
+Chemical Wash:
+A deeper or more specialized cleaning process involving chemicals to remove stubborn flux residues, oils, or particulates. It is especially used when "no-clean" flux isn't used or for boards requiring high cleanliness.
+
+Hand Solder (No Clean):
+Operators manually solder components using soldering irons and no-clean flux, which doesn't require washing. This method is used for small batches, specialized parts, or post-repair operations.
+
+Testing:
+This station verifies the functionality of the assembled PCB. It can include ICT (In-Circuit Testing), functional tests, or boundary scan to detect electrical issues like shorts, opens, or failed components.
+
+Burn-In:
+Burn-in testing subjects the board or product to elevated temperatures, voltages, or stress conditions for extended periods. This weeds out early-life failures and ensures the reliability of the final product.
+
+RTV (Room Temperature Vulcanizing):
+RTV silicone is applied to sensitive areas to provide insulation, vibration dampening, or environmental protection. It's commonly used to secure components that might loosen due to shock or heat.
+
+Conformal Coating:
+A protective chemical coating is applied to the PCB to shield it from moisture, dust, chemicals, and temperature extremes. It ensures durability in harsh environments like automotive or aerospace applications.
+
+QA Inspection:
+A final quality assurance checkpoint, this station ensures all prior processes were completed successfully. Boards are examined against production and compliance standards before being approved for shipment.
+
+Depanelisation:
+Individual PCBs are separated from a larger panel using routers, lasers, or manual tools. Care is taken to avoid mechanical stress or damage to the board edges and components.
+
+Packaging / Shipping:
+In the final stage, fully assembled and tested boards or products are packed with protective materials and labeled for shipping. This includes ESD-safe packaging, documentation, and customer-specific labeling.

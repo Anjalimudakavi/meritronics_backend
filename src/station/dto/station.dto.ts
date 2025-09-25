@@ -222,6 +222,10 @@ class CreateDocumentationInput {
   @IsString()
   fileUrl?: string;
 
+@IsOptional()
+@IsString()
+originalName?: string;
+
   @IsOptional()
   @IsString()
   description?: string;
@@ -231,6 +235,10 @@ class UpdateDocumentationInput {
   @IsOptional()
   @IsString()
   fileUrl?: string;
+
+@IsOptional()
+@IsString()
+originalName?: string;
 
   @IsOptional()
   @IsString()
@@ -242,6 +250,9 @@ class CreateFlowchartInput {
   @IsOptional()
   @IsString()
   fileUrl?: string;
+@IsOptional()
+@IsString()
+originalName?: string;
 
   @IsOptional()
   @IsString()
@@ -253,6 +264,10 @@ class UpdateFlowchartInput {
   @IsString()
   fileUrl?: string;
 
+
+  @IsOptional()
+@IsString()
+originalName?: string;
   @IsOptional()
   @IsString()
   description?: string;

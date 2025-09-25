@@ -12,7 +12,12 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
   });
-  app.use('/uploads', express.static(join(__dirname, '..', 'uploads')));
+  // const staticPath=join(__dirname, '..', 'uploads');
+  const staticPath = join(__dirname, '..', '..', 'uploads');
+
+  app.use('/uploads', express.static(staticPath));
+    console.log('✅ Serving static files from:', staticPath);
+    
   await app.listen(4000);
 }
 bootstrap();
